@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "gardenfi-dev",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["/Users/ash/GardenFi/node_modules/next/dist/bin/next", "dev", "--port", "3000", "/Users/ash/GardenFi"],
+      "port": 3000
+    }
+  ]
+}
