@@ -1,4 +1,4 @@
-import { JUPITER_API_URL, JUPITER_API_KEY, SOLANA_USDC_MINT } from "@/lib/solana/config";
+import { SOLANA_USDC_MINT } from "@/lib/solana/config";
 
 export interface JupiterQuote {
   rawQuote: unknown;
@@ -7,12 +7,10 @@ export interface JupiterQuote {
   priceImpact: string;
 }
 
-function jupiterHeaders(): HeadersInit {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (JUPITER_API_KEY) headers["x-api-key"] = JUPITER_API_KEY;
-  return headers;
-}
-
+/**
+ * Fetch a Jupiter V6 quote via our server-side proxy (/api/jupiter-quote).
+ * The proxy holds the API key server-side — no NEXT_PUBLIC_ key needed.
+ */
 export async function fetchJupiterQuote(
   usdcAmountRaw: bigint,
   outputMint: string,
@@ -25,9 +23,7 @@ export async function fetchJupiterQuote(
     slippageBps: "50",
   });
 
-  const res = await fetch(`${JUPITER_API_URL}/quote?${params}`, {
-    headers: jupiterHeaders(),
-  });
+  const res = await fetch(`/api/jupiter-quote?${params}`);
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`Jupiter quote failed (${res.status}): ${text}`);
@@ -41,13 +37,16 @@ export async function fetchJupiterQuote(
   return { rawQuote: data, amountOut, amountOutHuman, priceImpact };
 }
 
+/**
+ * Build a Jupiter swap transaction via our server-side proxy (/api/jupiter-swap).
+ */
 export async function fetchJupiterSwapTransaction(
   quoteResponse: unknown,
   userPublicKey: string
 ): Promise<string> {
-  const res = await fetch(`${JUPITER_API_URL}/swap`, {
+  const res = await fetch("/api/jupiter-swap", {
     method: "POST",
-    headers: jupiterHeaders(),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       quoteResponse,
       userPublicKey,
