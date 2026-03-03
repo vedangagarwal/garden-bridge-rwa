@@ -5,27 +5,32 @@ import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { BitcoinWalletButton } from "@/components/layout/BitcoinWalletButton";
 
-// Garden Finance official logo — flower blob with Bitcoin ₿ inside
+// Garden Finance logo — 4-petal blossom (petals N/E/S/W) with Bitcoin ₿
 function GardenLogo({ size = 32 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Petal top-left */}
-      <ellipse cx="32" cy="32" rx="22" ry="22" fill="#F590B9" />
-      {/* Petal top-right */}
-      <ellipse cx="68" cy="32" rx="22" ry="22" fill="#F590B9" />
-      {/* Petal bottom-left */}
-      <ellipse cx="32" cy="68" rx="22" ry="22" fill="#F590B9" />
-      {/* Petal bottom-right */}
-      <ellipse cx="68" cy="68" rx="22" ry="22" fill="#F590B9" />
-      {/* Center fill to merge petals */}
-      <rect x="28" y="28" width="44" height="44" fill="#F590B9" />
+      {/*
+        4 circles at cardinal points (N/E/S/W) + large centre circle.
+        All same fill so they merge into a smooth 4-petal blossom
+        with the bumps pointing up/right/down/left — matching the logo.
+      */}
+      {/* North petal */}
+      <circle cx="50" cy="25" r="26" fill="#F590B9" />
+      {/* East petal */}
+      <circle cx="75" cy="50" r="26" fill="#F590B9" />
+      {/* South petal */}
+      <circle cx="50" cy="75" r="26" fill="#F590B9" />
+      {/* West petal */}
+      <circle cx="25" cy="50" r="26" fill="#F590B9" />
+      {/* Centre fill — closes the gaps between petals */}
+      <circle cx="50" cy="50" r="30" fill="#F590B9" />
       {/* Bitcoin ₿ symbol */}
       <text
-        x="50"
-        y="65"
+        x="51"
+        y="66"
         textAnchor="middle"
         fill="white"
-        fontSize="44"
+        fontSize="45"
         fontFamily="Arial, sans-serif"
         fontWeight="bold"
       >
