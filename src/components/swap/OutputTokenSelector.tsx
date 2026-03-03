@@ -10,12 +10,17 @@ const SOLANA_TOKENS: OutputTokenKey[] = ["TSLAX", "USDG"];
 
 function ArbitrumLogo({ size = 18 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="16" cy="16" r="16" fill="#12AAFF" />
-      {/* Outer A */}
-      <path d="M16 7.5L24 24H8L16 7.5Z" stroke="white" strokeWidth="2" strokeLinejoin="round" fill="none" />
-      {/* Crossbar */}
-      <line x1="11.5" y1="18.5" x2="20.5" y2="18.5" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
+    <svg width={size} height={size} viewBox="0 0 32 37" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Hexagon border (light blue) */}
+      <path d="M16 0.5L30.5 8.5V24.5L16 32.5L1.5 24.5V8.5L16 0.5Z" fill="#96BEDC" />
+      {/* Hexagon inner fill (dark navy) */}
+      <path d="M16 3L28.5 10V24L16 31L3.5 24V10L16 3Z" fill="#213147" />
+      {/* Diagonal slash lines (white) */}
+      <path d="M10 24L16.5 10.5L17.5 13.5L12 24H10Z" fill="white" />
+      <path d="M13.5 24L20 10.5L21 13.5L15.5 24H13.5Z" fill="white" />
+      {/* Blue A right side */}
+      <path d="M20.5 24L17.5 17L19.5 13L24 24H20.5Z" fill="#12AAFF" />
+      <path d="M17.5 17L16.5 14.5L21 24H19L17.5 17Z" fill="#12AAFF" />
     </svg>
   );
 }
@@ -83,13 +88,6 @@ function NetworkDropdown({ label, logo, tokens, activeToken, onSelect }: Network
       >
         {logo}
         <span className="font-semibold">{label}</span>
-        {selectedToken && (
-          <>
-            <span className="text-[9px] opacity-40">·</span>
-            <span>{selectedToken.icon}</span>
-            <span>{selectedToken.symbol}</span>
-          </>
-        )}
         <ChevronIcon open={open} />
       </button>
 
