@@ -8,7 +8,10 @@ export const TSLAX_MINT =
   process.env.NEXT_PUBLIC_TSLAX_MINT ?? "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB";
 
 export const JUPITER_API_URL =
-  process.env.NEXT_PUBLIC_JUPITER_API_URL ?? "https://quote-api.jup.ag/v6";
+  process.env.NEXT_PUBLIC_JUPITER_API_URL ?? "https://api.jup.ag/swap/v1";
+
+export const JUPITER_API_KEY =
+  process.env.NEXT_PUBLIC_JUPITER_API_KEY ?? "";
 
 export const SOLANA_USDC_DECIMALS = 6;
 export const TSLAX_DECIMALS = 8;

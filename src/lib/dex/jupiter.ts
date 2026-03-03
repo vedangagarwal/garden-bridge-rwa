@@ -1,10 +1,16 @@
-import { JUPITER_API_URL, SOLANA_USDC_MINT } from "@/lib/solana/config";
+import { JUPITER_API_URL, JUPITER_API_KEY, SOLANA_USDC_MINT } from "@/lib/solana/config";
 
 export interface JupiterQuote {
   rawQuote: unknown;
   amountOut: string;
   amountOutHuman: string;
   priceImpact: string;
+}
+
+function jupiterHeaders(): HeadersInit {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (JUPITER_API_KEY) headers["x-api-key"] = JUPITER_API_KEY;
+  return headers;
 }
 
 export async function fetchJupiterQuote(
@@ -19,7 +25,9 @@ export async function fetchJupiterQuote(
     slippageBps: "50",
   });
 
-  const res = await fetch(`${JUPITER_API_URL}/quote?${params}`);
+  const res = await fetch(`${JUPITER_API_URL}/quote?${params}`, {
+    headers: jupiterHeaders(),
+  });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`Jupiter quote failed (${res.status}): ${text}`);
@@ -39,7 +47,7 @@ export async function fetchJupiterSwapTransaction(
 ): Promise<string> {
   const res = await fetch(`${JUPITER_API_URL}/swap`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: jupiterHeaders(),
     body: JSON.stringify({
       quoteResponse,
       userPublicKey,
