@@ -12,20 +12,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants = {
   primary: `
-    bg-[#d4af37] text-black font-semibold
-    hover:bg-[#f5c518] active:bg-[#b8960c]
-    disabled:bg-white/10 disabled:text-white/20 disabled:cursor-not-allowed
-    shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.4)]
+    font-semibold text-white
+    transition-all duration-200
   `,
   secondary: `
-    bg-white/5 text-white/80 font-medium border border-white/10
-    hover:bg-white/10 hover:border-white/20
-    disabled:opacity-40 disabled:cursor-not-allowed
+    font-medium border
+    transition-all duration-200
   `,
   ghost: `
-    text-white/50 font-medium
-    hover:text-white/80 hover:bg-white/5
-    disabled:opacity-40 disabled:cursor-not-allowed
+    font-medium
+    transition-all duration-200
   `,
 };
 
@@ -42,19 +38,43 @@ export function Button({
   disabled,
   children,
   className = "",
+  style,
   ...props
 }: ButtonProps) {
+  const variantStyle =
+    variant === "primary"
+      ? {
+          background: disabled || loading ? "#d8d2ef" : "#6B5DD3",
+          color: disabled || loading ? "#a09ac0" : "#ffffff",
+          boxShadow: disabled || loading ? "none" : "0 2px 12px rgba(107,93,211,0.30)",
+          cursor: disabled || loading ? "not-allowed" : "pointer",
+        }
+      : variant === "secondary"
+      ? {
+          background: "#f5f3fc",
+          color: "#6B5DD3",
+          border: "1.5px solid #e8e4f2",
+          cursor: disabled || loading ? "not-allowed" : "pointer",
+          opacity: disabled || loading ? 0.5 : 1,
+        }
+      : {
+          background: "transparent",
+          color: "#8b88a0",
+          cursor: disabled || loading ? "not-allowed" : "pointer",
+          opacity: disabled || loading ? 0.5 : 1,
+        };
+
   return (
     <button
       disabled={disabled || loading}
       className={`
         inline-flex items-center justify-center gap-2
-        transition-all duration-200 cursor-pointer
         ${variants[variant]} ${sizes[size]} ${className}
       `}
+      style={{ ...variantStyle, ...style }}
       {...props}
     >
-      {loading && <Spinner size="sm" gold={variant === "primary"} />}
+      {loading && <Spinner size="sm" gold={false} />}
       {children}
     </button>
   );

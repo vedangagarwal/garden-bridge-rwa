@@ -9,20 +9,23 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 w-full px-4 py-4">
+    <header
+      className="sticky top-0 z-40 w-full px-4 py-4"
+      style={{ background: "rgba(255,255,255,0.75)", backdropFilter: "blur(12px)", borderBottom: "1px solid #e8e4f2" }}
+    >
       <div className="max-w-2xl mx-auto flex items-center justify-between">
         {/* Logo + nav */}
         <div className="flex items-center gap-5">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="relative w-8 h-8">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#d4af37] to-[#7a5c08] opacity-80" />
-              <div className="absolute inset-[2px] rounded-full bg-[#0a0a0a] flex items-center justify-center">
-                <span className="text-[10px] font-bold text-[#d4af37]">Au</span>
+              <div className="absolute inset-0 rounded-full" style={{ background: "linear-gradient(135deg, #6B5DD3, #4e42b0)" }} />
+              <div className="absolute inset-[2px] rounded-full flex items-center justify-center" style={{ background: "#ffffff" }}>
+                <span className="text-[10px] font-bold" style={{ color: "#6B5DD3" }}>G</span>
               </div>
             </div>
             <div>
-              <span className="text-sm font-semibold text-white tracking-tight">GardenFi</span>
-              <span className="text-[10px] text-white/30 block leading-none -mt-0.5 tracking-widest uppercase">Gold Swap</span>
+              <span className="text-sm font-semibold tracking-tight" style={{ color: "#1a1028" }}>GardenFi</span>
+              <span className="text-[10px] block leading-none -mt-0.5 tracking-widest uppercase" style={{ color: "#8b88a0" }}>RWA Swap</span>
             </div>
           </Link>
 
@@ -32,9 +35,10 @@ export function Header() {
               href="/"
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 pathname === "/"
-                  ? "text-white bg-white/6"
-                  : "text-white/35 hover:text-white/60"
+                  ? "bg-[#6B5DD3]/10"
+                  : "hover:bg-[#6B5DD3]/5"
               }`}
+              style={{ color: pathname === "/" ? "#6B5DD3" : "#8b88a0" }}
             >
               Swap
             </Link>
@@ -42,9 +46,10 @@ export function Header() {
               href="/history"
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
                 pathname === "/history"
-                  ? "text-[#d4af37] bg-[#d4af37]/8"
-                  : "text-white/35 hover:text-white/60"
+                  ? "bg-[#6B5DD3]/10"
+                  : "hover:bg-[#6B5DD3]/5"
               }`}
+              style={{ color: pathname === "/history" ? "#6B5DD3" : "#8b88a0" }}
             >
               <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
                 <rect x="1" y="0.5" width="7" height="9" rx="1" stroke="currentColor" strokeWidth="1.1" />

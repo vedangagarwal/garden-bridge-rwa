@@ -6,8 +6,11 @@ import { OUTPUT_TOKENS } from "@/config/tokens";
 function Row({ label, value, mono = false, highlight = false }: { label: string; value: string; mono?: boolean; highlight?: boolean }) {
   return (
     <div className="flex items-center justify-between py-1.5">
-      <span className="text-[11px] text-white/35">{label}</span>
-      <span className={`text-[11px] ${mono ? "font-mono" : ""} ${highlight ? "text-[#d4af37]" : "text-white/60"}`}>
+      <span className="text-[11px]" style={{ color: "#8b88a0" }}>{label}</span>
+      <span
+        className={`text-[11px] ${mono ? "font-mono" : ""}`}
+        style={{ color: highlight ? "#6B5DD3" : "#1a1028" }}
+      >
         {value}
       </span>
     </div>
@@ -36,7 +39,10 @@ export function QuoteDisplay() {
   ).toFixed(Math.min(tokenConfig.decimals, 6));
 
   return (
-    <div className="rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-1 space-y-0 divide-y divide-white/5">
+    <div
+      className="rounded-2xl px-4 py-1 divide-y"
+      style={{ background: "#f5f3fc", border: "1px solid #e8e4f2", divideColor: "#e8e4f2" }}
+    >
       <Row label="Garden bridge fee" value={`${quote.gardenFee} bps`} mono />
       <Row label={isSolana ? "Jupiter fee" : "DEX swap fee"} value={`${quote.dexFee}%`} mono />
       <Row

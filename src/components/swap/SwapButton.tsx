@@ -56,7 +56,7 @@ export function SwapButton({ onSwap, loading }: Props) {
         ? "Enter an amount"
         : !quote
         ? "Fetching quote…"
-        : "Swap to Gold"}
+        : "Swap to Real Assets"}
     </Button>
   );
 }

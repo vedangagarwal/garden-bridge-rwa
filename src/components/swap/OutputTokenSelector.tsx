@@ -18,18 +18,27 @@ export function OutputTokenSelector() {
           <button
             key={key}
             onClick={() => setOutputToken(key)}
-            className={`
-              flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium
-              border transition-all duration-150
-              ${active
-                ? "border-[#d4af37]/60 bg-[#d4af37]/10 text-[#d4af37]"
-                : "border-white/8 bg-white/[0.03] text-white/40 hover:text-white/60 hover:border-white/15"
-              }
-            `}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-150"
+            style={
+              active
+                ? {
+                    background: "rgba(107,93,211,0.10)",
+                    border: "1.5px solid rgba(107,93,211,0.35)",
+                    color: "#6B5DD3",
+                  }
+                : {
+                    background: "#f5f3fc",
+                    border: "1.5px solid #e8e4f2",
+                    color: "#8b88a0",
+                  }
+            }
           >
             <span>{t.icon}</span>
             <span>{t.symbol}</span>
-            <span className={`text-[9px] ${active ? "text-[#d4af37]/60" : "text-white/25"}`}>
+            <span
+              className="text-[9px]"
+              style={{ color: active ? "rgba(107,93,211,0.55)" : "#b0adc4" }}
+            >
               {t.network === "solana" ? "SOL" : "ARB"}
             </span>
           </button>

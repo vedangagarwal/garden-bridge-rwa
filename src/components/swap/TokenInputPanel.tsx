@@ -66,15 +66,19 @@ export function TokenInputPanel() {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between px-1">
-        <span className="text-xs font-medium text-white/40 uppercase tracking-widest">You send</span>
+        <span className="text-xs font-medium uppercase tracking-widest" style={{ color: "#8b88a0" }}>You send</span>
         <div className="flex items-center gap-2">
           {balanceDisplay && (
-            <span className="text-[11px] text-white/30">Balance: {balanceDisplay}</span>
+            <span className="text-[11px]" style={{ color: "#b0adc4" }}>Balance: {balanceDisplay}</span>
           )}
           {hasBalance && (
             <button
               onClick={handleMax}
-              className="text-[10px] font-semibold text-[#d4af37]/60 hover:text-[#d4af37] border border-[#d4af37]/20 hover:border-[#d4af37]/50 rounded px-1.5 py-0.5 transition-all"
+              className="text-[10px] font-semibold rounded px-1.5 py-0.5 transition-all"
+              style={{
+                color: "#6B5DD3",
+                border: "1px solid rgba(107,93,211,0.25)",
+              }}
             >
               MAX
             </button>
@@ -82,10 +86,14 @@ export function TokenInputPanel() {
         </div>
       </div>
 
-      <div className={`
-        relative rounded-2xl border bg-[#111] transition-all duration-200
-        ${focused ? "border-[#d4af37]/50 shadow-[0_0_20px_rgba(212,175,55,0.1)]" : "border-white/10"}
-      `}>
+      <div
+        className="relative rounded-2xl transition-all duration-200"
+        style={{
+          background: "#f5f3fc",
+          border: focused ? "1.5px solid #6B5DD3" : "1.5px solid #e8e4f2",
+          boxShadow: focused ? "0 0 0 3px rgba(107,93,211,0.08)" : "none",
+        }}
+      >
         <div className="flex items-center gap-3 p-4">
           <TokenSelector
             value={inputToken as InputTokenSymbol}
@@ -99,8 +107,8 @@ export function TokenInputPanel() {
             onChange={(e) => handleAmountChange(e.target.value)}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            className="flex-1 bg-transparent text-right text-2xl font-light text-white placeholder-white/15 outline-none min-w-0"
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            className="flex-1 bg-transparent text-right text-2xl font-light outline-none min-w-0"
+            style={{ color: "#1a1028", caretColor: "#6B5DD3", fontVariantNumeric: "tabular-nums" }}
           />
           {isLoading && (
             <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -110,8 +118,8 @@ export function TokenInputPanel() {
         </div>
         {inputToken === "BTC" && inputAmount && parseFloat(inputAmount) > 0 && (
           <div className="px-4 pb-3 flex items-center justify-between">
-            <span className="text-[11px] text-white/25">Bitcoin Mainnet</span>
-            <span className="text-[11px] text-white/25 font-mono">
+            <span className="text-[11px]" style={{ color: "#b0adc4" }}>Bitcoin Mainnet</span>
+            <span className="text-[11px] font-mono" style={{ color: "#b0adc4" }}>
               ≈ {Math.round(parseFloat(inputAmount || "0") * 1e8).toLocaleString()} sats
             </span>
           </div>
@@ -119,7 +127,7 @@ export function TokenInputPanel() {
       </div>
 
       {quoteError && (
-        <p className="text-[11px] text-red-400/80 px-1">{quoteError}</p>
+        <p className="text-[11px] text-red-500 px-1">{quoteError}</p>
       )}
     </div>
   );

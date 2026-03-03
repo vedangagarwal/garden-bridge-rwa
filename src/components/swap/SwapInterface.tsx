@@ -16,9 +16,12 @@ import { OUTPUT_TOKENS } from "@/config/tokens";
 function ArrowDown() {
   return (
     <div className="flex items-center justify-center my-1">
-      <div className="w-8 h-8 rounded-full bg-[#1a1a1a] border border-white/10 flex items-center justify-center">
+      <div
+        className="w-8 h-8 rounded-full flex items-center justify-center"
+        style={{ background: "#f5f3fc", border: "1px solid #e8e4f2" }}
+      >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M7 2V12M7 12L3.5 8.5M7 12L10.5 8.5" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M7 2V12M7 12L3.5 8.5M7 12L10.5 8.5" stroke="#6B5DD3" strokeOpacity="0.6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
     </div>
@@ -58,58 +61,60 @@ export function SwapInterface() {
 
   return (
     <>
-      {/* Card with animated gold border on focus */}
-      <div className="relative group">
-        {/* Animated glow border */}
+      <div
+        className="relative rounded-3xl overflow-hidden"
+        style={{
+          background: "#ffffff",
+          border: "1px solid #e8e4f2",
+          boxShadow: "0 4px 32px rgba(107,93,211,0.10)",
+        }}
+      >
+        {/* Top accent stripe */}
         <div
-          className="absolute -inset-px rounded-3xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 pointer-events-none"
+          className="h-0.5 w-full"
           style={{
             background: isSolana
-              ? "linear-gradient(135deg, #a855f7, #3b82f6, #a855f7)"
-              : "linear-gradient(135deg, #d4af37, #7a5c08, #d4af37)",
-            filter: "blur(1px)",
+              ? "linear-gradient(90deg, transparent, #a78bfa, #818cf8, transparent)"
+              : "linear-gradient(90deg, transparent, #6B5DD3, #8a7de0, transparent)",
           }}
         />
-        <div className="relative rounded-3xl bg-[#111111] border border-white/8 overflow-hidden">
-          {/* Header stripe */}
-          <div className={`h-0.5 w-full bg-gradient-to-r from-transparent to-transparent ${
-            isSolana ? "via-purple-500/40" : "via-[#d4af37]/40"
-          }`} />
 
-          <div className="p-5 space-y-3">
-            <TokenInputPanel />
-            <ArrowDown />
+        <div className="p-5 space-y-3">
+          <TokenInputPanel />
+          <ArrowDown />
 
-            {/* Output token selector */}
-            <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-medium text-white/40 uppercase tracking-widest">
-                Receive
-              </span>
-              <OutputTokenSelector />
-            </div>
-
-            <TokenOutputPanel />
-
-            <div className="pt-1 space-y-2">
-              <SlippageSettings />
-              <QuoteDisplay />
-            </div>
-
-            <div className="pt-1">
-              <SwapButton onSwap={handleSwap} loading={swapping} />
-            </div>
-          </div>
-
-          {/* Network notice */}
-          <div className="px-5 pb-4 flex items-center justify-center gap-2">
-            <div className={`w-1.5 h-1.5 rounded-full ${isSolana ? "bg-purple-400/70" : "bg-emerald-400/70"}`} />
-            <span className="text-[10px] text-white/20 tracking-wide">
-              {isSolana
-                ? "Powered by Garden Finance · Solana · Jupiter V6"
-                : "Powered by Garden Finance · Arbitrum · 1inch"
-              }
+          {/* Output token selector */}
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs font-medium uppercase tracking-widest" style={{ color: "#8b88a0" }}>
+              Receive
             </span>
+            <OutputTokenSelector />
           </div>
+
+          <TokenOutputPanel />
+
+          <div className="pt-1 space-y-2">
+            <SlippageSettings />
+            <QuoteDisplay />
+          </div>
+
+          <div className="pt-1">
+            <SwapButton onSwap={handleSwap} loading={swapping} />
+          </div>
+        </div>
+
+        {/* Network notice */}
+        <div className="px-5 pb-4 flex items-center justify-center gap-2">
+          <div
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ background: isSolana ? "#a78bfa" : "#6B5DD3", opacity: 0.7 }}
+          />
+          <span className="text-[10px] tracking-wide" style={{ color: "#b0adc4" }}>
+            {isSolana
+              ? "Powered by Garden Finance · Solana · Jupiter V6"
+              : "Powered by Garden Finance · Arbitrum · 1inch"
+            }
+          </span>
         </div>
       </div>
 

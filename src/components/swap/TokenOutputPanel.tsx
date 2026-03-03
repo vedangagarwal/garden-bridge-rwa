@@ -22,27 +22,35 @@ export function TokenOutputPanel() {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between px-1">
-        <span className="text-xs font-medium text-white/40 uppercase tracking-widest">
+        <span className="text-xs font-medium uppercase tracking-widest" style={{ color: "#8b88a0" }}>
           You receive
         </span>
-        <span className={`text-[11px] ${isSolana ? "text-purple-400/50" : "text-white/20"}`}>
+        <span className="text-[11px]" style={{ color: isSolana ? "#a78bfa" : "#8b88a0" }}>
           {isSolana ? "Solana" : "Arbitrum"}
         </span>
       </div>
 
-      <div className="relative rounded-2xl border border-white/5 bg-[#0f0f0f] p-4">
+      <div
+        className="relative rounded-2xl p-4"
+        style={{ background: "#f5f3fc", border: "1.5px solid #e8e4f2" }}
+      >
         <div className="flex items-center gap-3">
           {/* Token badge */}
-          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 flex-shrink-0">
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px]
-              ${isSolana
-                ? "bg-gradient-to-br from-purple-500 to-blue-600"
-                : "bg-gradient-to-br from-[#d4af37] to-[#7a5c08]"
-              }`}
+          <div
+            className="flex items-center gap-2 rounded-xl px-3 py-2 flex-shrink-0"
+            style={{ background: "#ede9f7", border: "1px solid #e8e4f2" }}
+          >
+            <div
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[11px]"
+              style={{
+                background: isSolana
+                  ? "linear-gradient(135deg, #a78bfa, #818cf8)"
+                  : "linear-gradient(135deg, #6B5DD3, #4e42b0)",
+              }}
             >
               {tokenConfig.icon}
             </div>
-            <span className="text-sm font-semibold text-white">{tokenConfig.symbol}</span>
+            <span className="text-sm font-semibold" style={{ color: "#1a1028" }}>{tokenConfig.symbol}</span>
           </div>
 
           {/* Amount */}
@@ -53,37 +61,23 @@ export function TokenOutputPanel() {
               </div>
             ) : outputAmount ? (
               <span
-                className={`text-2xl font-light ${isSolana ? "text-purple-300" : "text-[#d4af37]"}`}
-                style={{ fontVariantNumeric: "tabular-nums" }}
+                className="text-2xl font-light"
+                style={{ color: isSolana ? "#7c6fd6" : "#6B5DD3", fontVariantNumeric: "tabular-nums" }}
               >
                 {outputAmount}
               </span>
             ) : (
-              <span className="text-2xl font-light text-white/15">—</span>
+              <span className="text-2xl font-light" style={{ color: "#d8d2ef" }}>—</span>
             )}
           </div>
         </div>
 
         {outputAmount && (
           <div className="mt-2 flex items-center justify-between">
-            <span className="text-[11px] text-white/25">{tokenConfig.name}</span>
-            <span className="text-[11px] text-white/20">
+            <span className="text-[11px]" style={{ color: "#b0adc4" }}>{tokenConfig.name}</span>
+            <span className="text-[11px]" style={{ color: "#b0adc4" }}>
               {isSolana ? "via Jupiter V6" : "via 1inch / Uniswap"}
             </span>
-          </div>
-        )}
-
-        {/* Shimmer */}
-        {outputAmount && (
-          <div className="absolute inset-0 rounded-2xl pointer-events-none overflow-hidden">
-            <div
-              className="absolute inset-0 opacity-[0.03]"
-              style={{
-                background: isSolana
-                  ? "linear-gradient(135deg, #a855f7 0%, transparent 50%, #3b82f6 100%)"
-                  : "linear-gradient(135deg, #d4af37 0%, transparent 50%, #d4af37 100%)",
-              }}
-            />
           </div>
         )}
       </div>
