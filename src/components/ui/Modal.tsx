@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 interface ModalProps {
   open: boolean;
@@ -10,62 +11,101 @@ interface ModalProps {
 }
 
 export function Modal({ open, onClose, children, title }: ModalProps) {
+  // Track client mount — portals need document to exist
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  // Lock body scroll while open
   useEffect(() => {
     if (open) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 flex items-center justify-center p-4"
       style={{
-        zIndex: 9999, // high enough to always sit above sticky/backdrop-filter headers
-        animation: "fadeIn 0.15s ease",
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+        zIndex: 99999,
+        boxSizing: "border-box",
       }}
     >
-      <style>{`
-        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes scaleIn { from { transform: scale(0.96); opacity: 0 } to { transform: scale(1); opacity: 1 } }
-      `}</style>
-
       {/* Backdrop */}
       <div
-        className="absolute inset-0"
-        style={{ background: "rgba(26,16,40,0.45)", backdropFilter: "blur(6px)" }}
         onClick={onClose}
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(26,16,40,0.50)",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+        }}
       />
 
       {/* Card */}
       <div
-        className="relative w-full max-w-sm rounded-3xl overflow-hidden"
         style={{
+          position: "relative",
+          width: "100%",
+          maxWidth: "400px",
           background: "#ffffff",
           border: "1.5px solid #e8e4f2",
-          boxShadow: "0 24px 64px rgba(107,93,211,0.18)",
-          animation: "scaleIn 0.18s ease",
+          borderRadius: "24px",
+          overflow: "hidden",
+          boxShadow: "0 24px 64px rgba(107,93,211,0.18), 0 4px 16px rgba(0,0,0,0.08)",
         }}
       >
         {title && (
-          <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: "1px solid #e8e4f2" }}>
-            <h2 className="text-base font-semibold" style={{ color: "#1a1028" }}>{title}</h2>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "20px 24px 16px",
+              borderBottom: "1px solid #e8e4f2",
+            }}
+          >
+            <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600, color: "#1a1028" }}>
+              {title}
+            </h2>
             {onClose && (
               <button
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full transition-colors text-lg leading-none"
-                style={{ background: "#f5f3fc", color: "#8b88a0" }}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  border: "none",
+                  background: "#f5f3fc",
+                  color: "#8b88a0",
+                  fontSize: "18px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  lineHeight: 1,
+                }}
               >
                 ×
               </button>
             )}
           </div>
         )}
-        <div className="px-6 py-4">
+        <div style={{ padding: "16px 24px 24px" }}>
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
