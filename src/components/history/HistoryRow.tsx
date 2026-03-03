@@ -17,7 +17,8 @@ function ExternalLink({ href, label }: { href: string; label: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-[#d4af37] hover:text-[#f5c518] transition-colors font-mono text-[11px]"
+      className="inline-flex items-center gap-1 font-mono text-[11px] transition-colors"
+      style={{ color: "#6B5DD3" }}
     >
       {label}
       <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
@@ -30,21 +31,21 @@ function ExternalLink({ href, label }: { href: string; label: string }) {
 function StatusBadge({ status }: { status: SwapRecord["status"] }) {
   const cfg = {
     complete: {
-      dot: "bg-emerald-400",
-      text: "text-emerald-400",
-      bg: "bg-emerald-500/8 border-emerald-500/15",
+      dot: "bg-emerald-500",
+      text: "text-emerald-600",
+      bg: "bg-emerald-500/10 border-emerald-500/20",
       label: "Complete",
     },
     failed: {
-      dot: "bg-red-400",
-      text: "text-red-400",
-      bg: "bg-red-500/8 border-red-500/15",
+      dot: "bg-red-500",
+      text: "text-red-500",
+      bg: "bg-red-500/10 border-red-500/20",
       label: "Failed",
     },
     refunding: {
-      dot: "bg-amber-400",
-      text: "text-amber-400",
-      bg: "bg-amber-500/8 border-amber-500/15",
+      dot: "bg-amber-500",
+      text: "text-amber-600",
+      bg: "bg-amber-500/10 border-amber-500/20",
       label: "Refunding",
     },
   }[status];
@@ -90,15 +91,24 @@ export function HistoryRow({ record, index }: Props) {
     ? `${record.gardenOrderId.slice(0, 6)}…${record.gardenOrderId.slice(-4)}`
     : `#${index + 1}`;
 
+  const cardStyle =
+    record.status === "complete"
+      ? { border: "1px solid rgba(16,185,129,0.25)", background: "#ffffff" }
+      : record.status === "failed"
+      ? { border: "1px solid rgba(239,68,68,0.20)", background: "#ffffff" }
+      : { border: "1px solid rgba(245,158,11,0.25)", background: "#ffffff" };
+
+  const cardHoverClass =
+    record.status === "complete"
+      ? "hover:border-emerald-300"
+      : record.status === "failed"
+      ? "hover:border-red-300"
+      : "hover:border-amber-300";
+
   return (
     <div
-      className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
-        record.status === "complete"
-          ? "border-emerald-500/10 bg-emerald-500/3 hover:border-emerald-500/20"
-          : record.status === "failed"
-          ? "border-red-500/10 bg-red-500/3 hover:border-red-500/20"
-          : "border-amber-500/10 bg-amber-500/3 hover:border-amber-500/20"
-      }`}
+      className={`rounded-2xl transition-all duration-200 overflow-hidden ${cardHoverClass}`}
+      style={{ ...cardStyle, boxShadow: "0 1px 8px rgba(107,93,211,0.06)" }}
     >
       {/* Main row — always visible */}
       <button
@@ -106,22 +116,22 @@ export function HistoryRow({ record, index }: Props) {
         onClick={() => setExpanded((e) => !e)}
       >
         {/* Row number / index */}
-        <span className="text-[11px] text-white/15 font-mono w-5 flex-shrink-0 text-right">
+        <span className="text-[11px] font-mono w-5 flex-shrink-0 text-right" style={{ color: "#b0adc4" }}>
           {String(index + 1).padStart(2, "0")}
         </span>
 
-        {/* Flow: BTC → XAUt */}
+        {/* Flow: BTC → Token */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-white font-mono">
+            <span className="text-sm font-semibold font-mono" style={{ color: "#1a1028" }}>
               {btcAmount}
             </span>
-            <span className="text-white/30 text-xs font-medium uppercase tracking-widest">
+            <span className="text-xs font-medium uppercase tracking-widest" style={{ color: "#8b88a0" }}>
               {record.inputToken}
             </span>
 
             {/* Arrow */}
-            <svg width="16" height="10" viewBox="0 0 16 10" fill="none" className="text-white/15 flex-shrink-0">
+            <svg width="16" height="10" viewBox="0 0 16 10" fill="none" className="flex-shrink-0" style={{ color: "#b0adc4" }}>
               <path d="M0 5h14M10 1l4 4-4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
 
@@ -129,30 +139,26 @@ export function HistoryRow({ record, index }: Props) {
               <>
                 <span
                   className="text-sm font-semibold font-mono"
-                  style={{
-                    background: "linear-gradient(135deg, #d4af37 0%, #f5c518 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}
+                  style={{ color: "#6B5DD3" }}
                 >
                   {xautDisplay}
                 </span>
-                <span className="text-[#d4af37]/50 text-xs font-medium uppercase tracking-widest">
+                <span className="text-xs font-medium uppercase tracking-widest" style={{ color: "rgba(107,93,211,0.5)" }}>
                   XAUt0
                 </span>
               </>
             ) : (
-              <span className="text-xs text-white/20">—</span>
+              <span className="text-xs" style={{ color: "#b0adc4" }}>—</span>
             )}
           </div>
 
           {/* Date + order id */}
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[11px] text-white/25">{dateStr}</span>
-            <span className="text-white/10">·</span>
-            <span className="text-[11px] text-white/20">{timeStr}</span>
-            <span className="text-white/10">·</span>
-            <span className="text-[11px] text-white/20 font-mono">{shortId}</span>
+            <span className="text-[11px]" style={{ color: "#b0adc4" }}>{dateStr}</span>
+            <span style={{ color: "#e8e4f2" }}>·</span>
+            <span className="text-[11px]" style={{ color: "#b0adc4" }}>{timeStr}</span>
+            <span style={{ color: "#e8e4f2" }}>·</span>
+            <span className="text-[11px] font-mono" style={{ color: "#b0adc4" }}>{shortId}</span>
           </div>
         </div>
 
@@ -164,7 +170,8 @@ export function HistoryRow({ record, index }: Props) {
             height="12"
             viewBox="0 0 12 12"
             fill="none"
-            className={`text-white/20 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+            className={`transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+            style={{ color: "#b0adc4" }}
           >
             <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -173,43 +180,43 @@ export function HistoryRow({ record, index }: Props) {
 
       {/* Expanded detail panel */}
       {expanded && (
-        <div className="px-4 pb-4 border-t border-white/4 pt-3 space-y-3">
+        <div className="px-4 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid #e8e4f2" }}>
           {/* Amounts grid */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-black/20 rounded-xl p-3 border border-white/4">
-              <p className="text-[10px] text-white/30 uppercase tracking-widest mb-1">BTC Sent</p>
-              <p className="text-sm font-mono font-semibold text-white">{btcAmount}</p>
-              <p className="text-[10px] text-white/25 mt-0.5">{record.inputAmountSats?.toLocaleString()} sats</p>
+            <div className="rounded-xl p-3" style={{ background: "#f5f3fc", border: "1px solid #e8e4f2" }}>
+              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "#8b88a0" }}>BTC Sent</p>
+              <p className="text-sm font-mono font-semibold" style={{ color: "#1a1028" }}>{btcAmount}</p>
+              <p className="text-[10px] mt-0.5" style={{ color: "#b0adc4" }}>{record.inputAmountSats?.toLocaleString()} sats</p>
             </div>
             {wbtcDisplay && (
-              <div className="bg-black/20 rounded-xl p-3 border border-white/4">
-                <p className="text-[10px] text-white/30 uppercase tracking-widest mb-1">WBTC Received</p>
-                <p className="text-sm font-mono font-semibold text-white">{wbtcDisplay}</p>
-                <p className="text-[10px] text-white/25 mt-0.5">via Garden Bridge</p>
+              <div className="rounded-xl p-3" style={{ background: "#f5f3fc", border: "1px solid #e8e4f2" }}>
+                <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "#8b88a0" }}>WBTC Received</p>
+                <p className="text-sm font-mono font-semibold" style={{ color: "#1a1028" }}>{wbtcDisplay}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: "#b0adc4" }}>via Garden Bridge</p>
               </div>
             )}
             {xautDisplay && (
-              <div className="bg-black/20 rounded-xl p-3 border border-[#d4af37]/10">
-                <p className="text-[10px] text-[#d4af37]/50 uppercase tracking-widest mb-1">XAUt0 Received</p>
-                <p className="text-sm font-mono font-semibold text-[#d4af37]">{xautDisplay}</p>
-                <p className="text-[10px] text-white/25 mt-0.5">via 1inch on Arbitrum</p>
+              <div className="rounded-xl p-3" style={{ background: "#f5f3fc", border: "1px solid rgba(107,93,211,0.25)" }}>
+                <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "rgba(107,93,211,0.55)" }}>XAUt0 Received</p>
+                <p className="text-sm font-mono font-semibold" style={{ color: "#6B5DD3" }}>{xautDisplay}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: "#b0adc4" }}>via 1inch on Arbitrum</p>
               </div>
             )}
             {record.errorMessage && (
-              <div className="col-span-2 bg-red-500/5 rounded-xl p-3 border border-red-500/10">
-                <p className="text-[10px] text-red-400/60 uppercase tracking-widest mb-1">Error</p>
-                <p className="text-xs text-red-400 break-all">{record.errorMessage}</p>
+              <div className="col-span-2 rounded-xl p-3 bg-red-50 border border-red-200">
+                <p className="text-[10px] text-red-400 uppercase tracking-widest mb-1">Error</p>
+                <p className="text-xs text-red-500 break-all">{record.errorMessage}</p>
               </div>
             )}
           </div>
 
           {/* Transaction links */}
           <div className="space-y-2">
-            <p className="text-[10px] text-white/20 uppercase tracking-widest">Transactions</p>
+            <p className="text-[10px] uppercase tracking-widest" style={{ color: "#8b88a0" }}>Transactions</p>
             <div className="flex flex-col gap-1.5">
               {record.btcSentTxId && (
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-white/30">BTC sent</span>
+                  <span className="text-[11px]" style={{ color: "#8b88a0" }}>BTC sent</span>
                   <ExternalLink
                     href={`${MEMPOOL}/${record.btcSentTxId}`}
                     label={`${record.btcSentTxId.slice(0, 8)}…${record.btcSentTxId.slice(-6)}`}
@@ -218,7 +225,7 @@ export function HistoryRow({ record, index }: Props) {
               )}
               {record.bridgeTxHash && (
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-white/30">Bridge redeem</span>
+                  <span className="text-[11px]" style={{ color: "#8b88a0" }}>Bridge redeem</span>
                   <ExternalLink
                     href={`${ARBISCAN}/${record.bridgeTxHash}`}
                     label={`${record.bridgeTxHash.slice(0, 8)}…${record.bridgeTxHash.slice(-6)}`}
@@ -227,7 +234,7 @@ export function HistoryRow({ record, index }: Props) {
               )}
               {record.dexTxHash && (
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-white/30">DEX swap</span>
+                  <span className="text-[11px]" style={{ color: "#8b88a0" }}>DEX swap</span>
                   <ExternalLink
                     href={`${ARBISCAN}/${record.dexTxHash}`}
                     label={`${record.dexTxHash.slice(0, 8)}…${record.dexTxHash.slice(-6)}`}
@@ -236,7 +243,7 @@ export function HistoryRow({ record, index }: Props) {
               )}
               {record.gardenOrderId && (
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-white/30">Garden order</span>
+                  <span className="text-[11px]" style={{ color: "#8b88a0" }}>Garden order</span>
                   <ExternalLink
                     href={`https://app.garden.finance/orders/${record.gardenOrderId}`}
                     label={`${record.gardenOrderId.slice(0, 8)}…${record.gardenOrderId.slice(-6)}`}
@@ -244,7 +251,7 @@ export function HistoryRow({ record, index }: Props) {
                 </div>
               )}
               {!record.btcSentTxId && !record.bridgeTxHash && !record.dexTxHash && !record.gardenOrderId && (
-                <p className="text-[11px] text-white/20">No transaction hashes recorded</p>
+                <p className="text-[11px]" style={{ color: "#b0adc4" }}>No transaction hashes recorded</p>
               )}
             </div>
           </div>
