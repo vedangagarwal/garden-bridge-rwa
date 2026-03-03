@@ -84,7 +84,7 @@ export function SwapInterface() {
           <ArrowDown />
 
           {/* Output token selector */}
-          <div className="flex items-center justify-between px-1">
+          <div className="flex flex-col gap-2 px-1">
             <span className="text-xs font-medium uppercase tracking-widest" style={{ color: "#8b88a0" }}>
               Receive
             </span>
