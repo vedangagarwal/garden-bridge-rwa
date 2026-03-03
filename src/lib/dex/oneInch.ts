@@ -25,11 +25,14 @@ function getHeaders() {
   return apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
 }
 
-export async function getOneInchQuote(wbtcAmount: string): Promise<OneInchQuoteResult> {
+export async function getOneInchQuote(
+  wbtcAmount: string,
+  outputAddress: `0x${string}` = TOKENS.XAUT.address
+): Promise<OneInchQuoteResult> {
   const res = await axios.get(`${ONE_INCH_BASE}/quote`, {
     params: {
       src: TOKENS.WBTC.address,
-      dst: TOKENS.XAUT.address,
+      dst: outputAddress,
       amount: wbtcAmount,
       includeGas: true,
     },
@@ -47,11 +50,13 @@ export async function getOneInchSwapCalldata(params: {
   wbtcAmount: string;
   fromAddress: `0x${string}`;
   slippage: number;
+  outputAddress?: `0x${string}`;
 }): Promise<OneInchSwapResult> {
+  const dst = params.outputAddress ?? TOKENS.XAUT.address;
   const res = await axios.get(`${ONE_INCH_BASE}/swap`, {
     params: {
       src: TOKENS.WBTC.address,
-      dst: TOKENS.XAUT.address,
+      dst,
       amount: params.wbtcAmount,
       from: params.fromAddress,
       slippage: params.slippage,

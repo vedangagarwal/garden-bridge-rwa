@@ -1,13 +1,16 @@
 import { useGarden } from "@gardenfi/react-hooks";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { GARDEN_ASSETS } from "@/lib/garden/assets";
-import type { InputTokenSymbol } from "@/config/tokens";
+import type { InputTokenSymbol, OutputTokenKey } from "@/config/tokens";
 import type { QuoteResponse } from "@gardenfi/core";
 
-export function useGardenBridge(inputToken: InputTokenSymbol) {
+export function useGardenBridge(inputToken: InputTokenSymbol, outputToken: OutputTokenKey = "XAUT") {
   const { swap, getQuote } = useGarden();
+  const { publicKey } = useWallet();
 
   const fromAsset = inputToken === "BTC" ? GARDEN_ASSETS.BTC : GARDEN_ASSETS.WBTC;
-  const toAsset = GARDEN_ASSETS.WBTC_ARBITRUM;
+  const isSolana = outputToken === "TSLAX";
+  const toAsset = isSolana ? GARDEN_ASSETS.SOLANA_USDC : GARDEN_ASSETS.WBTC_ARBITRUM;
 
   async function fetchGardenQuote(amountSats: number): Promise<QuoteResponse[]> {
     if (!getQuote) throw new Error("Garden not initialized");
@@ -24,15 +27,18 @@ export function useGardenBridge(inputToken: InputTokenSymbol) {
     btcRefundAddress?: string;
   }) {
     if (!swap) throw new Error("Garden not initialized");
+    // For Solana path, destination is the Solana wallet public key (base58)
+    const destinationAddress = isSolana
+      ? (publicKey?.toString() ?? params.userAddress)
+      : params.userAddress;
     const result = await swap({
       fromAsset,
       toAsset,
       sendAmount: params.sendAmount,
       receiveAmount: params.receiveAmount,
       solverId: params.solverId,
-      // Use connected BTC wallet address as source/refund address for BTC swaps
       sourceAddress: params.btcRefundAddress ?? params.userAddress,
-      destinationAddress: params.userAddress,
+      destinationAddress,
     });
     if (!result || result.error) throw new Error(result?.error ?? "Swap initiation failed");
     return result.val!;

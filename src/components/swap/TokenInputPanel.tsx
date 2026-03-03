@@ -14,23 +14,23 @@ const DEBOUNCE_MS = 600;
 
 export function TokenInputPanel() {
   const { address } = useAccount();
-  const { inputToken, inputAmount, setInputToken, setInputAmount, setQuote } = useSwapStore();
+  const { inputToken, outputToken, inputAmount, setInputToken, setInputAmount, setQuote } = useSwapStore();
   const { fetchQuote, isLoading, error: quoteError } = useSwapQuote();
   const { wbtcBalance } = useTokenBalances();
   const { isConnected: btcConnected, btcBalanceBtc, btcBalanceSats } = useBitcoinWallet();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [focused, setFocused] = useState(false);
 
-  // Debounced quote fetch
+  // Debounced quote fetch — re-fetch when outputToken changes too
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!inputAmount || parseFloat(inputAmount) <= 0) { setQuote(null); return; }
     debounceRef.current = setTimeout(async () => {
-      const q = await fetchQuote(inputToken, inputAmount);
+      const q = await fetchQuote(inputToken, inputAmount, outputToken);
       setQuote(q);
     }, DEBOUNCE_MS);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [inputAmount, inputToken, fetchQuote, setQuote]);
+  }, [inputAmount, inputToken, outputToken, fetchQuote, setQuote]);
 
   function handleAmountChange(val: string) {
     if (val === "" || /^\d*\.?\d*$/.test(val)) setInputAmount(val);

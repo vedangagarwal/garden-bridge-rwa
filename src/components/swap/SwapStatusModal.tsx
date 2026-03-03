@@ -5,6 +5,8 @@ import { StepIndicator } from "@/components/status/StepIndicator";
 import { BridgeStatusCard } from "@/components/status/BridgeStatusCard";
 import { DexSwapStatusCard } from "@/components/status/DexSwapStatusCard";
 import { Button } from "@/components/ui/Button";
+import { useSwapStore } from "@/store/swapStore";
+import { OUTPUT_TOKENS } from "@/config/tokens";
 import type { SwapSession } from "@/types/swap";
 
 interface Props {
@@ -15,10 +17,14 @@ interface Props {
 }
 
 export function SwapStatusModal({ open, session, onClose, onReset }: Props) {
+  const { outputToken } = useSwapStore();
   const { status, errorMessage, xautReceived } = session;
   const isDone = status === "complete";
   const isFailed = status === "failed" || status === "refunding";
   const canDismiss = isDone || isFailed;
+
+  const tokenConfig = OUTPUT_TOKENS[outputToken];
+  const isSolana = tokenConfig.network === "solana";
 
   return (
     <Modal
@@ -36,12 +42,31 @@ export function SwapStatusModal({ open, session, onClose, onReset }: Props) {
 
         {/* Success state */}
         {isDone && xautReceived && (
-          <div className="rounded-2xl bg-gradient-to-br from-[#d4af37]/10 to-transparent border border-[#d4af37]/20 p-5 text-center">
-            <div className="text-3xl font-light text-[#d4af37] mb-1" style={{ fontVariantNumeric: "tabular-nums" }}>
+          <div className={`rounded-2xl border p-5 text-center ${
+            isSolana
+              ? "bg-gradient-to-br from-purple-500/10 to-transparent border-purple-500/20"
+              : "bg-gradient-to-br from-[#d4af37]/10 to-transparent border-[#d4af37]/20"
+          }`}>
+            <div
+              className={`text-3xl font-light mb-1 ${isSolana ? "text-purple-300" : "text-[#d4af37]"}`}
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
               {parseFloat(xautReceived).toFixed(6)}
             </div>
-            <div className="text-sm text-white/50">XAUt0 received on Arbitrum</div>
-            <div className="text-[11px] text-white/25 mt-1">Tether Gold (troy oz)</div>
+            <div className="text-sm text-white/50">
+              {tokenConfig.symbol} received on {isSolana ? "Solana" : "Arbitrum"}
+            </div>
+            <div className="text-[11px] text-white/25 mt-1">{tokenConfig.name}</div>
+            {isSolana && session.solanaSignature && (
+              <a
+                href={`https://solscan.io/tx/${session.solanaSignature}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-purple-400/60 hover:text-purple-400 mt-2 block"
+              >
+                View on Solscan ↗
+              </a>
+            )}
           </div>
         )}
 

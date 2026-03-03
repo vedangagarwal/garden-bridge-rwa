@@ -2,8 +2,11 @@ import { useCallback, useState } from "react";
 import { useGarden } from "@gardenfi/react-hooks";
 import { GARDEN_ASSETS } from "@/lib/garden/assets";
 import { getOneInchQuote } from "@/lib/dex/oneInch";
+import { fetchJupiterQuote } from "@/lib/dex/jupiter";
+import { OUTPUT_TOKENS } from "@/config/tokens";
+import { TSLAX_MINT, TSLAX_DECIMALS } from "@/lib/solana/config";
 import type { CombinedQuote } from "@/types/swap";
-import type { InputTokenSymbol } from "@/config/tokens";
+import type { InputTokenSymbol, OutputTokenKey } from "@/config/tokens";
 
 /** Garden Finance minimum swap: 0.0001 BTC / WBTC (10,000 sats ≈ $10) */
 const MIN_AMOUNT_BTC = 0.0001;
@@ -16,7 +19,8 @@ export function useSwapQuote() {
   const fetchQuote = useCallback(
     async (
       inputToken: InputTokenSymbol,
-      amount: string
+      amount: string,
+      outputToken: OutputTokenKey = "XAUT"
     ): Promise<CombinedQuote | null> => {
       if (!amount || parseFloat(amount) <= 0 || !getQuote) return null;
 
@@ -30,11 +34,16 @@ export function useSwapQuote() {
 
       try {
         const amountSats = Math.round(parseFloat(amount) * 1e8);
-        const fromAsset = inputToken === "BTC" ? GARDEN_ASSETS.BTC : GARDEN_ASSETS.WBTC;
+        const fromAsset =
+          inputToken === "BTC" ? GARDEN_ASSETS.BTC : GARDEN_ASSETS.WBTC;
+        const isSolana = outputToken === "TSLAX";
+        const toAsset = isSolana
+          ? GARDEN_ASSETS.SOLANA_USDC
+          : GARDEN_ASSETS.WBTC_ARBITRUM;
 
         const gardenResult = await getQuote({
           fromAsset,
-          toAsset: GARDEN_ASSETS.WBTC_ARBITRUM,
+          toAsset,
           amount: amountSats,
           isExactOut: false,
         });
@@ -44,31 +53,66 @@ export function useSwapQuote() {
         }
 
         const best = gardenResult.val![0];
-        const wbtcAmount = best.destination.amount; // in WBTC smallest unit (8 decimals / satoshis)
+        // intermediateAmount: WBTC in satoshis (Arbitrum path) OR USDC in raw units (Solana path)
+        const intermediateAmount = best.destination.amount;
 
-        const dexResult = await getOneInchQuote(wbtcAmount).catch(async () => {
-          // Fallback: estimate using rough BTC/gold price ratio
-          const wbtcFloat = parseFloat(wbtcAmount) / 1e8;
-          // 1 BTC ≈ ~30 troy oz gold (rough estimate for fallback only)
-          return {
-            toAmount: Math.floor(wbtcFloat * 30 * 1e6).toString(),
-            estimatedGas: 200000,
-            priceImpact: "0",
-          };
-        });
+        let xautAmount: string;
+        let pricePerBtc: string;
+        let priceImpact = "0";
+        let jupiterQuote: unknown = undefined;
 
-        const xautFloat = parseFloat(dexResult.toAmount) / 1e6;
-        const btcFloat = parseFloat(amount);
+        if (isSolana) {
+          // Jupiter: USDC → TSLAx
+          const usdcBigInt = BigInt(Math.round(parseFloat(intermediateAmount)));
+          const jupResult = await fetchJupiterQuote(
+            usdcBigInt,
+            TSLAX_MINT,
+            TSLAX_DECIMALS
+          );
+          xautAmount = jupResult.amountOut;
+          jupiterQuote = jupResult.rawQuote;
+          priceImpact = jupResult.priceImpact;
+          const tslaxFloat = parseFloat(jupResult.amountOutHuman);
+          const btcFloat = parseFloat(amount);
+          pricePerBtc = btcFloat > 0 ? (tslaxFloat / btcFloat).toFixed(6) : "0";
+        } else {
+          // 1inch: WBTC → XAUt0 or PAXG
+          const outputConfig = OUTPUT_TOKENS[outputToken as "XAUT" | "PAXG"];
+          const outputAddress = outputConfig.address;
+          const outputDecimals = outputConfig.decimals;
+
+          const dexResult = await getOneInchQuote(
+            intermediateAmount,
+            outputAddress
+          ).catch(() => {
+            const wbtcFloat = parseFloat(intermediateAmount) / 1e8;
+            return {
+              toAmount: Math.floor(
+                wbtcFloat * 30 * 10 ** outputDecimals
+              ).toString(),
+              estimatedGas: 200000,
+              priceImpact: "0",
+            };
+          });
+
+          xautAmount = dexResult.toAmount;
+          priceImpact = dexResult.priceImpact;
+          const outFloat = parseFloat(dexResult.toAmount) / 10 ** outputDecimals;
+          const btcFloat = parseFloat(amount);
+          pricePerBtc = btcFloat > 0 ? (outFloat / btcFloat).toFixed(6) : "0";
+        }
 
         return {
-          gardenReceiveAmount: wbtcAmount,
-          xautAmount: dexResult.toAmount,
+          gardenReceiveAmount: intermediateAmount,
+          xautAmount,
           gardenFee: best.fee,
-          dexFee: "0.875",
+          dexFee: isSolana ? "0.1" : "0.875",
           estimatedTimeSeconds: best.estimated_time + 30,
           solverId: best.solver_id,
-          pricePerBtc: btcFloat > 0 ? (xautFloat / btcFloat).toFixed(6) : "0",
-          priceImpact: dexResult.priceImpact,
+          pricePerBtc,
+          priceImpact,
+          outputToken,
+          jupiterQuote,
         };
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Quote failed";

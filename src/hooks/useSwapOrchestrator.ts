@@ -4,6 +4,7 @@ import { useHistoryStore } from "@/store/historyStore";
 import { useGardenBridge } from "./useGardenBridge";
 import { useOrderPoller } from "./useOrderPoller";
 import { useDexSwap } from "./useDexSwap";
+import { useJupiterSwap } from "./useJupiterSwap";
 import { useBitcoinWalletStore } from "@/store/bitcoinWalletStore";
 import type { InputTokenSymbol } from "@/config/tokens";
 
@@ -12,6 +13,7 @@ export function useSwapOrchestrator() {
   const {
     session,
     inputToken,
+    outputToken,
     slippage,
     quote,
     setSession,
@@ -21,9 +23,12 @@ export function useSwapOrchestrator() {
   const btcAddress = useBitcoinWalletStore((s) => s.address);
   const { addRecord } = useHistoryStore();
 
-  const { initiateSwap } = useGardenBridge(inputToken as InputTokenSymbol);
+  const { initiateSwap } = useGardenBridge(inputToken as InputTokenSymbol, outputToken);
   const { pollUntilBridgeComplete } = useOrderPoller();
   const { executeXautSwap } = useDexSwap();
+  const { executeJupiterSwap } = useJupiterSwap();
+
+  const isSolana = outputToken === "TSLAX";
 
   async function startSwap() {
     if (!address || !quote) return;
@@ -66,46 +71,71 @@ export function useSwapOrchestrator() {
         onBridging: () => setStatus("bridging"),
       });
 
-      const wbtcAmount = completedOrder.destination_swap.filled_amount;
-      const wbtcHuman = (parseFloat(wbtcAmount) / 1e8).toFixed(8);
+      const filledAmount = completedOrder.destination_swap.filled_amount;
 
       setSession({
         status: "bridge_complete",
-        gardenReceiveAmount: wbtcHuman,
+        gardenReceiveAmount: filledAmount,
         bridgeTxHash: completedOrder.destination_swap.redeem_tx_hash,
       });
 
-      await executeXautSwap({
-        wbtcAmount: wbtcHuman,
-        userAddress: address,
-        slippage,
-        onApproving: () => setStatus("approving"),
-        onSwapping: () => setStatus("swapping"),
-        onComplete: (txHash, xautAmount) => {
-          setSession({ status: "complete", dexTxHash: txHash, xautReceived: xautAmount });
-          // Save to history
-          const s = useSwapStore.getState().session;
-          addRecord({
-            id: s.gardenOrderId ?? `swap-${Date.now()}`,
-            createdAt: s.createdAt ?? Date.now(),
-            inputToken: inputToken as InputTokenSymbol,
-            inputAmountSats: amountSats,
-            wbtcReceived: s.gardenReceiveAmount,
-            xautReceived: xautAmount,
-            btcSentTxId: s.btcSentTxId,
-            bridgeTxHash: s.bridgeTxHash,
-            dexTxHash: txHash,
-            gardenOrderId: s.gardenOrderId,
-            status: "complete",
-            errorMessage: null,
-          });
-        },
-      });
+      if (isSolana) {
+        // Solana path: Solana USDC → TSLAx via Jupiter
+        setStatus("swapping");
+        const usdcRaw = BigInt(Math.round(parseFloat(filledAmount)));
+        const { signature, outputAmount } = await executeJupiterSwap(usdcRaw);
+        setSession({ status: "complete", solanaSignature: signature, xautReceived: outputAmount });
+        const s = useSwapStore.getState().session;
+        addRecord({
+          id: s.gardenOrderId ?? `swap-${Date.now()}`,
+          createdAt: s.createdAt ?? Date.now(),
+          inputToken: inputToken as InputTokenSymbol,
+          inputAmountSats: amountSats,
+          wbtcReceived: s.gardenReceiveAmount,
+          xautReceived: outputAmount,
+          btcSentTxId: s.btcSentTxId,
+          bridgeTxHash: s.bridgeTxHash,
+          dexTxHash: null,
+          gardenOrderId: s.gardenOrderId,
+          status: "complete",
+          errorMessage: null,
+        });
+      } else {
+        // Arbitrum path: WBTC → XAUt0 or PAXG via 1inch/Uniswap
+        const wbtcHuman = (parseFloat(filledAmount) / 1e8).toFixed(8);
+        setSession({ gardenReceiveAmount: wbtcHuman });
+
+        await executeXautSwap({
+          wbtcAmount: wbtcHuman,
+          userAddress: address,
+          slippage,
+          outputTokenKey: outputToken,
+          onApproving: () => setStatus("approving"),
+          onSwapping: () => setStatus("swapping"),
+          onComplete: (txHash, xautAmount) => {
+            setSession({ status: "complete", dexTxHash: txHash, xautReceived: xautAmount });
+            const s = useSwapStore.getState().session;
+            addRecord({
+              id: s.gardenOrderId ?? `swap-${Date.now()}`,
+              createdAt: s.createdAt ?? Date.now(),
+              inputToken: inputToken as InputTokenSymbol,
+              inputAmountSats: amountSats,
+              wbtcReceived: s.gardenReceiveAmount,
+              xautReceived: xautAmount,
+              btcSentTxId: s.btcSentTxId,
+              bridgeTxHash: s.bridgeTxHash,
+              dexTxHash: txHash,
+              gardenOrderId: s.gardenOrderId,
+              status: "complete",
+              errorMessage: null,
+            });
+          },
+        });
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Swap failed";
       const finalStatus = msg.includes("refund") ? "refunding" : "failed";
       setSession({ status: finalStatus, errorMessage: msg });
-      // Save failed/refunding swap to history
       const s = useSwapStore.getState().session;
       addRecord({
         id: s.gardenOrderId ?? `swap-${Date.now()}`,

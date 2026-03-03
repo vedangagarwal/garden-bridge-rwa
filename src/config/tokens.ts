@@ -39,5 +39,42 @@ export const TOKENS = {
   },
 } as const;
 
+/** Output tokens the user can swap into */
+export const OUTPUT_TOKENS = {
+  XAUT: {
+    key: "XAUT" as const,
+    symbol: "XAUt0",
+    name: "Tether Gold",
+    decimals: 6,
+    network: "arbitrum" as const,
+    address: "0x40461291347e1ecbb09499f3371d3f17f10d7159" as `0x${string}`,
+    icon: "🥇",
+    description: "Gold · Arbitrum",
+  },
+  PAXG: {
+    key: "PAXG" as const,
+    symbol: "PAXG",
+    name: "PAX Gold",
+    decimals: 18,
+    network: "arbitrum" as const,
+    address: "0xF9151B81C3f31AdC3AB98Ac4c78Dd339F00dD51B" as `0x${string}`,
+    icon: "🏅",
+    description: "Gold · Arbitrum",
+  },
+  TSLAX: {
+    key: "TSLAX" as const,
+    symbol: "TSLAx",
+    name: "Tesla Token",
+    decimals: 8,
+    network: "solana" as const,
+    mint: "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB",
+    icon: "🚗",
+    description: "Equity · Solana",
+  },
+} as const;
+
+export type OutputTokenKey = keyof typeof OUTPUT_TOKENS;
+export type OutputToken = (typeof OUTPUT_TOKENS)[OutputTokenKey];
+
 export type InputTokenSymbol = "BTC" | "WBTC";
 export const INPUT_TOKENS: InputTokenSymbol[] = ["BTC", "WBTC"];

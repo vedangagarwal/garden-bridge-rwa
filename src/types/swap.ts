@@ -1,3 +1,5 @@
+import type { OutputTokenKey } from "@/config/tokens";
+
 export type SwapStatus =
   | "idle"
   | "quoting"
@@ -18,14 +20,16 @@ export interface SwapSession {
   depositAmountSats: number | null;
   gardenReceiveAmount: string | null;
   dexTxHash: `0x${string}` | null;
+  /** Human-readable output token amount received (XAUt0, PAXG, or TSLAx) */
   xautReceived: string | null;
   errorMessage: string | null;
   bridgeTxHash: string | null;
   createdAt: number | null;
   btcConfirmations: number;
   btcRequiredConfirmations: number;
-  /** txid after user sends BTC via connected wallet */
   btcSentTxId: string | null;
+  /** Solana path: Jupiter transaction signature */
+  solanaSignature: string | null;
 }
 
 export const DEFAULT_SESSION: SwapSession = {
@@ -42,10 +46,12 @@ export const DEFAULT_SESSION: SwapSession = {
   btcConfirmations: 0,
   btcRequiredConfirmations: 1,
   btcSentTxId: null,
+  solanaSignature: null,
 };
 
 export interface CombinedQuote {
   gardenReceiveAmount: string;
+  /** Raw output token amount in token's smallest unit */
   xautAmount: string;
   gardenFee: number;
   dexFee: string;
@@ -53,4 +59,8 @@ export interface CombinedQuote {
   solverId: string;
   pricePerBtc: string;
   priceImpact: string;
+  /** Which output token this quote is for */
+  outputToken: OutputTokenKey;
+  /** Raw Jupiter quote response (Solana path only) */
+  jupiterQuote?: unknown;
 }

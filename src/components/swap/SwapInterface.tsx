@@ -5,10 +5,12 @@ import { useSwapStore } from "@/store/swapStore";
 import { useSwapOrchestrator } from "@/hooks/useSwapOrchestrator";
 import { TokenInputPanel } from "./TokenInputPanel";
 import { TokenOutputPanel } from "./TokenOutputPanel";
+import { OutputTokenSelector } from "./OutputTokenSelector";
 import { QuoteDisplay } from "./QuoteDisplay";
 import { SlippageSettings } from "./SlippageSettings";
 import { SwapButton } from "./SwapButton";
 import { SwapStatusModal } from "./SwapStatusModal";
+import { OUTPUT_TOKENS } from "@/config/tokens";
 
 // Arrow down icon
 function ArrowDown() {
@@ -25,9 +27,12 @@ function ArrowDown() {
 
 export function SwapInterface() {
   const { session, startSwap, resetSwap } = useSwapOrchestrator();
-  const { quote, inputAmount } = useSwapStore();
+  const { quote, inputAmount, outputToken } = useSwapStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [swapping, setSwapping] = useState(false);
+
+  const tokenConfig = OUTPUT_TOKENS[outputToken];
+  const isSolana = tokenConfig.network === "solana";
 
   // Open modal when swap starts
   useEffect(() => {
@@ -59,17 +64,30 @@ export function SwapInterface() {
         <div
           className="absolute -inset-px rounded-3xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 pointer-events-none"
           style={{
-            background: "linear-gradient(135deg, #d4af37, #7a5c08, #d4af37)",
+            background: isSolana
+              ? "linear-gradient(135deg, #a855f7, #3b82f6, #a855f7)"
+              : "linear-gradient(135deg, #d4af37, #7a5c08, #d4af37)",
             filter: "blur(1px)",
           }}
         />
         <div className="relative rounded-3xl bg-[#111111] border border-white/8 overflow-hidden">
           {/* Header stripe */}
-          <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[#d4af37]/40 to-transparent" />
+          <div className={`h-0.5 w-full bg-gradient-to-r from-transparent to-transparent ${
+            isSolana ? "via-purple-500/40" : "via-[#d4af37]/40"
+          }`} />
 
           <div className="p-5 space-y-3">
             <TokenInputPanel />
             <ArrowDown />
+
+            {/* Output token selector */}
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-medium text-white/40 uppercase tracking-widest">
+                Receive
+              </span>
+              <OutputTokenSelector />
+            </div>
+
             <TokenOutputPanel />
 
             <div className="pt-1 space-y-2">
@@ -84,9 +102,12 @@ export function SwapInterface() {
 
           {/* Network notice */}
           <div className="px-5 pb-4 flex items-center justify-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/70" />
+            <div className={`w-1.5 h-1.5 rounded-full ${isSolana ? "bg-purple-400/70" : "bg-emerald-400/70"}`} />
             <span className="text-[10px] text-white/20 tracking-wide">
-              Powered by Garden Finance · Arbitrum
+              {isSolana
+                ? "Powered by Garden Finance · Solana · Jupiter V6"
+                : "Powered by Garden Finance · Arbitrum · 1inch"
+              }
             </span>
           </div>
         </div>

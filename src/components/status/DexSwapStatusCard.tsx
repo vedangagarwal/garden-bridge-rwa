@@ -2,6 +2,8 @@
 
 import { Spinner } from "@/components/ui/Spinner";
 import { TxHashLink } from "./TxHashLink";
+import { useSwapStore } from "@/store/swapStore";
+import { OUTPUT_TOKENS } from "@/config/tokens";
 import type { SwapSession } from "@/types/swap";
 
 interface Props {
@@ -9,11 +11,19 @@ interface Props {
 }
 
 export function DexSwapStatusCard({ session }: Props) {
-  const { status, dexTxHash, xautReceived } = session;
+  const { outputToken } = useSwapStore();
+  const { status, dexTxHash, xautReceived, solanaSignature } = session;
+
+  const tokenConfig = OUTPUT_TOKENS[outputToken];
+  const isSolana = tokenConfig.network === "solana";
 
   const isDone = status === "complete";
   const isActive = ["bridge_complete", "approving", "swapping"].includes(status);
   const isPending = ["idle", "quoting", "awaiting_deposit", "confirming", "bridging"].includes(status);
+
+  const stepLabel = isSolana
+    ? `Step 2 — Swap to ${tokenConfig.symbol} on Solana`
+    : `Step 2 — Swap to ${tokenConfig.symbol}`;
 
   return (
     <div className={`rounded-2xl border p-4 transition-all duration-300 ${
@@ -23,7 +33,7 @@ export function DexSwapStatusCard({ session }: Props) {
     }`}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-semibold uppercase tracking-widest text-white/40">
-          Step 2 — Swap to XAUt0
+          {stepLabel}
         </span>
         {isDone ? (
           <span className="text-xs text-emerald-400 font-medium">✓ Done</span>
@@ -37,19 +47,26 @@ export function DexSwapStatusCard({ session }: Props) {
       )}
 
       {status === "bridge_complete" && (
-        <p className="text-xs text-white/50">USDC received. Preparing DEX swap…</p>
+        <p className="text-xs text-white/50">
+          {isSolana ? "USDC received. Preparing Jupiter swap…" : "WBTC received. Preparing DEX swap…"}
+        </p>
       )}
 
       {status === "approving" && (
         <div>
-          <p className="text-xs text-white/60">Approving USDC for 1inch router…</p>
+          <p className="text-xs text-white/60">Approving WBTC for 1inch router…</p>
           <p className="text-[11px] text-white/30 mt-1">Confirm transaction in your wallet</p>
         </div>
       )}
 
       {status === "swapping" && (
         <div>
-          <p className="text-xs text-white/60">Swapping USDC → XAUt0 on Arbitrum…</p>
+          <p className="text-xs text-white/60">
+            {isSolana
+              ? `Swapping USDC → ${tokenConfig.symbol} on Solana…`
+              : `Swapping WBTC → ${tokenConfig.symbol} on Arbitrum…`
+            }
+          </p>
           <p className="text-[11px] text-white/30 mt-1">Confirm transaction in your wallet</p>
         </div>
       )}
@@ -62,11 +79,24 @@ export function DexSwapStatusCard({ session }: Props) {
               <TxHashLink hash={dexTxHash} />
             </div>
           )}
+          {isSolana && solanaSignature && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-white/40">Jupiter tx:</span>
+              <a
+                href={`https://solscan.io/tx/${solanaSignature}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-mono text-purple-400/70 hover:text-purple-400 truncate max-w-[160px]"
+              >
+                {solanaSignature.slice(0, 8)}…{solanaSignature.slice(-6)}
+              </a>
+            </div>
+          )}
           {xautReceived && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-white/40">XAUt0 received:</span>
+              <span className="text-xs text-white/40">{tokenConfig.symbol} received:</span>
               <span className="text-xs font-mono text-emerald-400">
-                {parseFloat(xautReceived).toFixed(6)} XAUt0
+                {parseFloat(xautReceived).toFixed(6)} {tokenConfig.symbol}
               </span>
             </div>
           )}
