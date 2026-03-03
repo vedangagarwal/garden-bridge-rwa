@@ -57,7 +57,7 @@ export function BitcoinWalletButton() {
         <div className="w-5 h-5 rounded-full bg-[#f7931a]/20 flex items-center justify-center flex-shrink-0">
           <span className="text-[10px] font-bold text-[#f7931a]">₿</span>
         </div>
-        <span className="text-sm font-semibold text-white/70">Connect BTC</span>
+        <span className="text-sm font-semibold" style={{ color: "#1a1028" }}>Connect BTC</span>
       </button>
 
       <BitcoinWalletSelector
