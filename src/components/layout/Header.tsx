@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { BitcoinWalletButton } from "@/components/layout/BitcoinWalletButton";
+import { BitcoinWalletButton, walletBtnStyle } from "@/components/layout/BitcoinWalletButton";
 
 // Garden Finance logo — 4-petal blossom (petals N/E/S/W) with Bitcoin ₿
 function GardenLogo({ size = 32 }: { size?: number }) {
@@ -93,11 +93,68 @@ export function Header() {
         {/* Wallets — BTC + EVM side by side */}
         <div className="flex items-center gap-2">
           <BitcoinWalletButton />
-          <ConnectButton
-            chainStatus="icon"
-            showBalance={false}
-            accountStatus="avatar"
-          />
+          <ConnectButton.Custom>
+            {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
+              const ready = mounted;
+              const connected = ready && account && chain;
+              return (
+                <div style={!ready ? { opacity: 0, pointerEvents: "none", userSelect: "none" } : {}}>
+                  {!connected ? (
+                    <button
+                      onClick={openConnectModal}
+                      className="flex items-center gap-2.5 px-4 py-[9px] rounded-xl transition-all hover:opacity-80"
+                      style={walletBtnStyle}
+                    >
+                      {/* EVM wallet icon */}
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <rect x="2" y="6" width="20" height="14" rx="2" stroke="#1a1028" strokeWidth="1.8"/>
+                        <path d="M2 10h20" stroke="#1a1028" strokeWidth="1.8"/>
+                        <circle cx="17" cy="15" r="1.5" fill="#1a1028"/>
+                      </svg>
+                      <span className="text-sm font-semibold" style={{ color: "#1a1028" }}>Connect Wallet</span>
+                    </button>
+                  ) : chain.unsupported ? (
+                    <button
+                      onClick={openChainModal}
+                      className="flex items-center gap-2 px-4 py-[9px] rounded-xl transition-all hover:opacity-80"
+                      style={{ ...walletBtnStyle, border: "2px solid #ef4444", color: "#ef4444" }}
+                    >
+                      <span className="text-sm font-semibold">Wrong Network</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      {/* Chain button */}
+                      <button
+                        onClick={openChainModal}
+                        className="flex items-center gap-1.5 px-3 py-[9px] rounded-xl transition-all hover:opacity-80"
+                        style={walletBtnStyle}
+                      >
+                        {chain.hasIcon && chain.iconUrl && (
+                          <img src={chain.iconUrl} alt={chain.name} width={16} height={16} className="rounded-full" />
+                        )}
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                          <path d="M2 3.5l3 3 3-3" stroke="#1a1028" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      {/* Account button */}
+                      <button
+                        onClick={openAccountModal}
+                        className="flex items-center gap-2 px-4 py-[9px] rounded-xl transition-all hover:opacity-80"
+                        style={walletBtnStyle}
+                      >
+                        <div className="w-5 h-5 rounded-full flex-shrink-0 overflow-hidden"
+                          style={{ background: "linear-gradient(135deg, #6B5DD3, #F590B9)" }}
+                        />
+                        <span className="text-sm font-semibold font-mono" style={{ color: "#1a1028" }}>
+                          {account.displayName}
+                        </span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            }}
+          </ConnectButton.Custom>
         </div>
       </div>
     </header>
