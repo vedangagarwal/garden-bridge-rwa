@@ -5,6 +5,36 @@ import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { BitcoinWalletButton } from "@/components/layout/BitcoinWalletButton";
 
+// Garden Finance official logo — flower blob with Bitcoin ₿ inside
+function GardenLogo({ size = 32 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Petal top-left */}
+      <ellipse cx="32" cy="32" rx="22" ry="22" fill="#5B4FCF" />
+      {/* Petal top-right */}
+      <ellipse cx="68" cy="32" rx="22" ry="22" fill="#5B4FCF" />
+      {/* Petal bottom-left */}
+      <ellipse cx="32" cy="68" rx="22" ry="22" fill="#5B4FCF" />
+      {/* Petal bottom-right */}
+      <ellipse cx="68" cy="68" rx="22" ry="22" fill="#5B4FCF" />
+      {/* Center fill to merge petals */}
+      <rect x="28" y="28" width="44" height="44" fill="#5B4FCF" />
+      {/* Bitcoin ₿ symbol */}
+      <text
+        x="50"
+        y="65"
+        textAnchor="middle"
+        fill="white"
+        fontSize="44"
+        fontFamily="Arial, sans-serif"
+        fontWeight="bold"
+      >
+        ₿
+      </text>
+    </svg>
+  );
+}
+
 export function Header() {
   const pathname = usePathname();
 
@@ -17,12 +47,7 @@ export function Header() {
         {/* Logo + nav */}
         <div className="flex items-center gap-5">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="relative w-8 h-8">
-              <div className="absolute inset-0 rounded-full" style={{ background: "linear-gradient(135deg, #6B5DD3, #4e42b0)" }} />
-              <div className="absolute inset-[2px] rounded-full flex items-center justify-center" style={{ background: "#ffffff" }}>
-                <span className="text-[10px] font-bold" style={{ color: "#6B5DD3" }}>G</span>
-              </div>
-            </div>
+            <GardenLogo size={34} />
             <div>
               <span className="text-sm font-semibold tracking-tight" style={{ color: "#1a1028" }}>GardenFi</span>
               <span className="text-[10px] block leading-none -mt-0.5 tracking-widest uppercase" style={{ color: "#8b88a0" }}>RWA Swap</span>
