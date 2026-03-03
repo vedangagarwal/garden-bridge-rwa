@@ -1,18 +1,26 @@
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { VersionedTransaction } from "@solana/web3.js";
 import { fetchJupiterQuote, fetchJupiterSwapTransaction } from "@/lib/dex/jupiter";
-import { TSLAX_MINT, TSLAX_DECIMALS } from "@/lib/solana/config";
+import { TSLAX_MINT, TSLAX_DECIMALS, USDG_MINT, USDG_DECIMALS } from "@/lib/solana/config";
+import type { OutputTokenKey } from "@/config/tokens";
+
+function getMintAndDecimals(outputTokenKey: OutputTokenKey): { mint: string; decimals: number } {
+  if (outputTokenKey === "USDG") return { mint: USDG_MINT, decimals: USDG_DECIMALS };
+  return { mint: TSLAX_MINT, decimals: TSLAX_DECIMALS };
+}
 
 export function useJupiterSwap() {
   const { publicKey, sendTransaction } = useWallet();
   const { connection } = useConnection();
 
   async function executeJupiterSwap(
-    usdcAmountRaw: bigint
+    usdcAmountRaw: bigint,
+    outputTokenKey: OutputTokenKey = "TSLAX"
   ): Promise<{ signature: string; outputAmount: string }> {
     if (!publicKey) throw new Error("Solana wallet not connected");
 
-    const quote = await fetchJupiterQuote(usdcAmountRaw, TSLAX_MINT, TSLAX_DECIMALS);
+    const { mint, decimals } = getMintAndDecimals(outputTokenKey);
+    const quote = await fetchJupiterQuote(usdcAmountRaw, mint, decimals);
 
     const swapTxBase64 = await fetchJupiterSwapTransaction(
       quote.rawQuote,

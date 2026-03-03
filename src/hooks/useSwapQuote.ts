@@ -4,12 +4,20 @@ import { GARDEN_ASSETS } from "@/lib/garden/assets";
 import { getOneInchQuote } from "@/lib/dex/oneInch";
 import { fetchJupiterQuote } from "@/lib/dex/jupiter";
 import { OUTPUT_TOKENS } from "@/config/tokens";
-import { TSLAX_MINT, TSLAX_DECIMALS } from "@/lib/solana/config";
+import { TSLAX_MINT, TSLAX_DECIMALS, USDG_MINT, USDG_DECIMALS } from "@/lib/solana/config";
 import type { CombinedQuote } from "@/types/swap";
 import type { InputTokenSymbol, OutputTokenKey } from "@/config/tokens";
 
 /** Garden Finance minimum swap: 0.0001 BTC / WBTC (10,000 sats ≈ $10) */
 const MIN_AMOUNT_BTC = 0.0001;
+
+/** Solana output tokens that go through Jupiter (USDC → token) */
+const SOLANA_TOKENS = new Set<OutputTokenKey>(["TSLAX", "USDG"]);
+
+function getSolanaMintAndDecimals(outputToken: OutputTokenKey): { mint: string; decimals: number } {
+  if (outputToken === "USDG") return { mint: USDG_MINT, decimals: USDG_DECIMALS };
+  return { mint: TSLAX_MINT, decimals: TSLAX_DECIMALS };
+}
 
 export function useSwapQuote() {
   const { getQuote } = useGarden();
@@ -36,7 +44,7 @@ export function useSwapQuote() {
         const amountSats = Math.round(parseFloat(amount) * 1e8);
         const fromAsset =
           inputToken === "BTC" ? GARDEN_ASSETS.BTC : GARDEN_ASSETS.WBTC;
-        const isSolana = outputToken === "TSLAX";
+        const isSolana = SOLANA_TOKENS.has(outputToken);
         const toAsset = isSolana
           ? GARDEN_ASSETS.SOLANA_USDC
           : GARDEN_ASSETS.WBTC_ARBITRUM;
@@ -62,19 +70,16 @@ export function useSwapQuote() {
         let jupiterQuote: unknown = undefined;
 
         if (isSolana) {
-          // Jupiter: USDC → TSLAx
+          // Jupiter: USDC → output token (TSLAx or USDG)
+          const { mint, decimals } = getSolanaMintAndDecimals(outputToken);
           const usdcBigInt = BigInt(Math.round(parseFloat(intermediateAmount)));
-          const jupResult = await fetchJupiterQuote(
-            usdcBigInt,
-            TSLAX_MINT,
-            TSLAX_DECIMALS
-          );
+          const jupResult = await fetchJupiterQuote(usdcBigInt, mint, decimals);
           xautAmount = jupResult.amountOut;
           jupiterQuote = jupResult.rawQuote;
           priceImpact = jupResult.priceImpact;
-          const tslaxFloat = parseFloat(jupResult.amountOutHuman);
+          const outFloat = parseFloat(jupResult.amountOutHuman);
           const btcFloat = parseFloat(amount);
-          pricePerBtc = btcFloat > 0 ? (tslaxFloat / btcFloat).toFixed(6) : "0";
+          pricePerBtc = btcFloat > 0 ? (outFloat / btcFloat).toFixed(6) : "0";
         } else {
           // 1inch: WBTC → XAUt0 or PAXG
           const outputConfig = OUTPUT_TOKENS[outputToken as "XAUT" | "PAXG"];

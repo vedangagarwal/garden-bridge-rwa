@@ -71,6 +71,16 @@ export const OUTPUT_TOKENS = {
     icon: "🚗",
     description: "Equity · Solana",
   },
+  USDG: {
+    key: "USDG" as const,
+    symbol: "USDG",
+    name: "Garden USD",
+    decimals: 6,
+    network: "solana" as const,
+    mint: "2u1tszSeqZ3qBWF3uNGPFc8TzMk2tdiwknnRMWGWjGWH",
+    icon: "💲",
+    description: "Stablecoin · Solana",
+  },
 } as const;
 
 export type OutputTokenKey = keyof typeof OUTPUT_TOKENS;

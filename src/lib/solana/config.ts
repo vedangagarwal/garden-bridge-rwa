@@ -7,6 +7,9 @@ export const SOLANA_USDC_MINT =
 export const TSLAX_MINT =
   process.env.NEXT_PUBLIC_TSLAX_MINT ?? "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB";
 
+export const USDG_MINT =
+  process.env.NEXT_PUBLIC_USDG_MINT ?? "2u1tszSeqZ3qBWF3uNGPFc8TzMk2tdiwknnRMWGWjGWH";
+
 export const JUPITER_API_URL =
   process.env.NEXT_PUBLIC_JUPITER_API_URL ?? "https://api.jup.ag/swap/v1";
 
@@ -15,4 +18,5 @@ export const JUPITER_API_KEY =
 
 export const SOLANA_USDC_DECIMALS = 6;
 export const TSLAX_DECIMALS = 8;
+export const USDG_DECIMALS = 6;
 export const SOLANA_POLL_INTERVAL_MS = 5000;

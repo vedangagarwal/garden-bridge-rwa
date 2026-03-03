@@ -4,7 +4,7 @@ import { useSwapStore } from "@/store/swapStore";
 import { OUTPUT_TOKENS } from "@/config/tokens";
 import type { OutputTokenKey } from "@/config/tokens";
 
-const TOKENS: OutputTokenKey[] = ["XAUT", "PAXG", "TSLAX"];
+const TOKENS: OutputTokenKey[] = ["XAUT", "PAXG", "TSLAX", "USDG"];
 
 export function OutputTokenSelector() {
   const { outputToken, setOutputToken } = useSwapStore();

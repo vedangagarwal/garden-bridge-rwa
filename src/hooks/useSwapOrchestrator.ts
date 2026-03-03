@@ -28,7 +28,7 @@ export function useSwapOrchestrator() {
   const { executeXautSwap } = useDexSwap();
   const { executeJupiterSwap } = useJupiterSwap();
 
-  const isSolana = outputToken === "TSLAX";
+  const isSolana = outputToken === "TSLAX" || outputToken === "USDG";
 
   async function startSwap() {
     if (!address || !quote) return;
@@ -83,7 +83,7 @@ export function useSwapOrchestrator() {
         // Solana path: Solana USDC → TSLAx via Jupiter
         setStatus("swapping");
         const usdcRaw = BigInt(Math.round(parseFloat(filledAmount)));
-        const { signature, outputAmount } = await executeJupiterSwap(usdcRaw);
+        const { signature, outputAmount } = await executeJupiterSwap(usdcRaw, outputToken);
         setSession({ status: "complete", solanaSignature: signature, xautReceived: outputAmount });
         const s = useSwapStore.getState().session;
         addRecord({
