@@ -10,15 +10,15 @@ function GardenLogo({ size = 32 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* Petal top-left */}
-      <ellipse cx="32" cy="32" rx="22" ry="22" fill="#5B4FCF" />
+      <ellipse cx="32" cy="32" rx="22" ry="22" fill="#F590B9" />
       {/* Petal top-right */}
-      <ellipse cx="68" cy="32" rx="22" ry="22" fill="#5B4FCF" />
+      <ellipse cx="68" cy="32" rx="22" ry="22" fill="#F590B9" />
       {/* Petal bottom-left */}
-      <ellipse cx="32" cy="68" rx="22" ry="22" fill="#5B4FCF" />
+      <ellipse cx="32" cy="68" rx="22" ry="22" fill="#F590B9" />
       {/* Petal bottom-right */}
-      <ellipse cx="68" cy="68" rx="22" ry="22" fill="#5B4FCF" />
+      <ellipse cx="68" cy="68" rx="22" ry="22" fill="#F590B9" />
       {/* Center fill to merge petals */}
-      <rect x="28" y="28" width="44" height="44" fill="#5B4FCF" />
+      <rect x="28" y="28" width="44" height="44" fill="#F590B9" />
       {/* Bitcoin ₿ symbol */}
       <text
         x="50"
