@@ -40,8 +40,8 @@ export function QuoteDisplay() {
 
   return (
     <div
-      className="rounded-2xl px-4 py-1 divide-y"
-      style={{ background: "#f5f3fc", border: "1px solid #e8e4f2", divideColor: "#e8e4f2" }}
+      className="rounded-2xl px-4 py-1 divide-y divide-[#e8e4f2]"
+      style={{ background: "#f5f3fc", border: "1px solid #e8e4f2" }}
     >
       <Row label="Garden bridge fee" value={`${quote.gardenFee} bps`} mono />
       <Row label={isSolana ? "Jupiter fee" : "DEX swap fee"} value={`${quote.dexFee}%`} mono />
