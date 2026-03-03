@@ -24,7 +24,7 @@ export default function Home() {
               </span>
             </h1>
             <p className="text-sm text-white/30">
-              Bridge BTC via Garden Finance · Receive XAUt0 on Arbitrum
+              Bridge BTC via Garden Finance · Receive gold or RWA tokens
             </p>
           </div>
 
