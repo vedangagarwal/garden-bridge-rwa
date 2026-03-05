@@ -10,12 +10,12 @@ function getMintAndDecimals(outputTokenKey: OutputTokenKey): { mint: string; dec
 }
 
 /**
- * Poll getSignatureStatus every 2 s for up to 3 minutes.
+ * Poll getSignatureStatuses every 2 s for up to 3 minutes.
  *
- * Why not use connection.confirmTransaction(sig, commitment)?
- * That API has a hardcoded 30-second timeout and throws
- * "Transaction was not confirmed in 30.00 seconds" even when the
- * transaction has simply not yet propagated — causing false failures.
+ * IMPORTANT: do NOT pass searchTransactionHistory:true — the public Solana
+ * RPC (api.mainnet-beta.solana.com) returns 403 Access Forbidden for that
+ * option. For a freshly-submitted transaction it is not needed anyway since
+ * the signature is still in the node's recent signatures cache.
  */
 async function pollForConfirmation(
   connection: import("@solana/web3.js").Connection,
@@ -25,18 +25,16 @@ async function pollForConfirmation(
   const MAX_ATTEMPTS = 90; // 90 × 2 s = 3 minutes
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const { value } = await connection.getSignatureStatus(signature, {
-      searchTransactionHistory: true,
-    });
+    // No searchTransactionHistory flag — public RPC forbids it (returns 403)
+    const { value } = await connection.getSignatureStatus(signature);
 
     if (value !== null) {
-      // Transaction found — check for on-chain errors
+      // Transaction found on-chain — check for execution errors
       if (value.err) {
         throw new Error(
           `Jupiter transaction rejected on-chain: ${JSON.stringify(value.err)}`
         );
       }
-      // Accepted statuses
       if (
         value.confirmationStatus === "confirmed" ||
         value.confirmationStatus === "finalized"
@@ -45,15 +43,15 @@ async function pollForConfirmation(
       }
     }
 
-    // Not yet confirmed — wait before next poll (skip wait on last attempt)
+    // Not yet visible — wait before next poll (skip wait on final attempt)
     if (attempt < MAX_ATTEMPTS - 1) {
       await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
     }
   }
 
   throw new Error(
-    `Jupiter swap transaction was not confirmed after 3 minutes.\n` +
-      `Check signature on Solscan: ${signature}`
+    `Jupiter swap was not confirmed after 3 minutes. ` +
+    `Check signature on Solscan: ${signature}`
   );
 }
 
