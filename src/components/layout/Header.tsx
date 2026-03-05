@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { BitcoinWalletButton, walletBtnStyle } from "@/components/layout/BitcoinWalletButton";
+import { NetworkSwitcherModal } from "@/components/layout/NetworkSwitcherModal";
 
 // Garden Finance logo — 4-petal blossom (petals N/E/S/W) with Bitcoin ₿
 function GardenLogo({ size = 32 }: { size?: number }) {
@@ -37,6 +39,132 @@ function GardenLogo({ size = 32 }: { size?: number }) {
         ₿
       </text>
     </svg>
+  );
+}
+
+// Extracted so we can use hooks inside ConnectButton.Custom render
+function WalletButtons({
+  mounted, connected, chainUnsupported, accountDisplayName,
+  openConnectModal, openAccountModal,
+}: {
+  mounted: boolean;
+  connected: boolean;
+  chainUnsupported: boolean;
+  accountDisplayName?: string;
+  openConnectModal: () => void;
+  openAccountModal: () => void;
+}) {
+  const [networkModalOpen, setNetworkModalOpen] = useState(false);
+
+  if (!mounted) return <div style={{ opacity: 0, pointerEvents: "none" }} />;
+
+  if (chainUnsupported) {
+    return (
+      <>
+        <button
+          onClick={() => setNetworkModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-[9px] rounded-xl transition-all hover:opacity-80"
+          style={{ ...walletBtnStyle, border: "2px solid #ef4444", color: "#ef4444" }}
+        >
+          <span className="text-sm font-semibold">Wrong Network</span>
+        </button>
+        <NetworkSwitcherModal
+          open={networkModalOpen}
+          onClose={() => setNetworkModalOpen(false)}
+          onConnectEVM={openConnectModal}
+          onManageEVM={openAccountModal}
+        />
+      </>
+    );
+  }
+
+  if (!connected) {
+    return (
+      <>
+        {/* Network switcher */}
+        <button
+          onClick={() => setNetworkModalOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-[9px] rounded-xl transition-all hover:opacity-80"
+          style={walletBtnStyle}
+          title="Switch Network"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#1a1028" strokeWidth="1.8"/>
+            <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" stroke="#1a1028" strokeWidth="1.8"/>
+          </svg>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M2 3.5l3 3 3-3" stroke="#1a1028" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+
+        {/* Connect EVM wallet */}
+        <button
+          onClick={openConnectModal}
+          className="flex items-center gap-2.5 px-4 py-[9px] rounded-xl transition-all hover:opacity-80"
+          style={walletBtnStyle}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="6" width="20" height="14" rx="2" stroke="#1a1028" strokeWidth="1.8"/>
+            <path d="M2 10h20" stroke="#1a1028" strokeWidth="1.8"/>
+            <circle cx="17" cy="15" r="1.5" fill="#1a1028"/>
+          </svg>
+          <span className="text-sm font-semibold" style={{ color: "#1a1028" }}>Connect Wallet</span>
+        </button>
+
+        <NetworkSwitcherModal
+          open={networkModalOpen}
+          onClose={() => setNetworkModalOpen(false)}
+          onConnectEVM={openConnectModal}
+          onManageEVM={openAccountModal}
+        />
+      </>
+    );
+  }
+
+  // Connected
+  return (
+    <>
+      {/* Network switcher button */}
+      <button
+        onClick={() => setNetworkModalOpen(true)}
+        className="flex items-center gap-1.5 px-3 py-[9px] rounded-xl transition-all hover:opacity-80"
+        style={walletBtnStyle}
+        title="Switch Network"
+      >
+        {/* Arbitrum icon */}
+        <svg width="16" height="18" viewBox="0 0 32 37" fill="none">
+          <path d="M16 0.5L30.5 8.5V24.5L16 32.5L1.5 24.5V8.5L16 0.5Z" fill="#96BEDC"/>
+          <path d="M16 3L28.5 10V24L16 31L3.5 24V10L16 3Z" fill="#213147"/>
+          <path d="M10 24L16.5 10.5L17.5 13.5L12 24H10Z" fill="white"/>
+          <path d="M13.5 24L20 10.5L21 13.5L15.5 24H13.5Z" fill="white"/>
+          <path d="M20.5 24L17.5 17L19.5 13L24 24H20.5Z" fill="#12AAFF"/>
+        </svg>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2 3.5l3 3 3-3" stroke="#1a1028" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      {/* Account button */}
+      <button
+        onClick={openAccountModal}
+        className="flex items-center gap-2 px-4 py-[9px] rounded-xl transition-all hover:opacity-80"
+        style={walletBtnStyle}
+      >
+        <div className="w-5 h-5 rounded-full flex-shrink-0 overflow-hidden"
+          style={{ background: "linear-gradient(135deg, #6B5DD3, #F590B9)" }}
+        />
+        <span className="text-sm font-semibold font-mono" style={{ color: "#1a1028" }}>
+          {accountDisplayName}
+        </span>
+      </button>
+
+      <NetworkSwitcherModal
+        open={networkModalOpen}
+        onClose={() => setNetworkModalOpen(false)}
+        onConnectEVM={openConnectModal}
+        onManageEVM={openAccountModal}
+      />
+    </>
   );
 }
 
@@ -90,68 +218,23 @@ export function Header() {
           </nav>
         </div>
 
-        {/* Wallets — BTC + EVM side by side */}
+        {/* Wallets — BTC + Network switcher + EVM account */}
         <div className="flex items-center gap-2">
           <BitcoinWalletButton />
           <ConnectButton.Custom>
-            {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
+            {({ account, chain, openAccountModal, openConnectModal, mounted }) => {
               const ready = mounted;
               const connected = ready && account && chain;
+
               return (
-                <div style={!ready ? { opacity: 0, pointerEvents: "none", userSelect: "none" } : {}}>
-                  {!connected ? (
-                    <button
-                      onClick={openConnectModal}
-                      className="flex items-center gap-2.5 px-4 py-[9px] rounded-xl transition-all hover:opacity-80"
-                      style={walletBtnStyle}
-                    >
-                      {/* EVM wallet icon */}
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <rect x="2" y="6" width="20" height="14" rx="2" stroke="#1a1028" strokeWidth="1.8"/>
-                        <path d="M2 10h20" stroke="#1a1028" strokeWidth="1.8"/>
-                        <circle cx="17" cy="15" r="1.5" fill="#1a1028"/>
-                      </svg>
-                      <span className="text-sm font-semibold" style={{ color: "#1a1028" }}>Connect Wallet</span>
-                    </button>
-                  ) : chain.unsupported ? (
-                    <button
-                      onClick={openChainModal}
-                      className="flex items-center gap-2 px-4 py-[9px] rounded-xl transition-all hover:opacity-80"
-                      style={{ ...walletBtnStyle, border: "2px solid #ef4444", color: "#ef4444" }}
-                    >
-                      <span className="text-sm font-semibold">Wrong Network</span>
-                    </button>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
-                      {/* Chain button */}
-                      <button
-                        onClick={openChainModal}
-                        className="flex items-center gap-1.5 px-3 py-[9px] rounded-xl transition-all hover:opacity-80"
-                        style={walletBtnStyle}
-                      >
-                        {chain.hasIcon && chain.iconUrl && (
-                          <img src={chain.iconUrl} alt={chain.name} width={16} height={16} className="rounded-full" />
-                        )}
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                          <path d="M2 3.5l3 3 3-3" stroke="#1a1028" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                      {/* Account button */}
-                      <button
-                        onClick={openAccountModal}
-                        className="flex items-center gap-2 px-4 py-[9px] rounded-xl transition-all hover:opacity-80"
-                        style={walletBtnStyle}
-                      >
-                        <div className="w-5 h-5 rounded-full flex-shrink-0 overflow-hidden"
-                          style={{ background: "linear-gradient(135deg, #6B5DD3, #F590B9)" }}
-                        />
-                        <span className="text-sm font-semibold font-mono" style={{ color: "#1a1028" }}>
-                          {account.displayName}
-                        </span>
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <WalletButtons
+                  mounted={!!ready}
+                  connected={!!connected}
+                  chainUnsupported={!!chain?.unsupported}
+                  accountDisplayName={account?.displayName}
+                  openConnectModal={openConnectModal}
+                  openAccountModal={openAccountModal}
+                />
               );
             }}
           </ConnectButton.Custom>
