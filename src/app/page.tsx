@@ -25,12 +25,6 @@ export default function Home() {
           </div>
 
           <SwapInterface />
-
-          {/* Disclaimer */}
-          <p className="text-center text-[10px] leading-relaxed pt-2" style={{ color: "#b0adc4" }}>
-            XAUt0 is Tether Gold bridged to Arbitrum via LayerZero OFT.
-            Verify contract addresses before transacting.
-          </p>
         </div>
       </main>
     </div>

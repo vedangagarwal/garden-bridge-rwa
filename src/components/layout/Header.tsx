@@ -45,7 +45,7 @@ function GardenLogo({ size = 32 }: { size?: number }) {
 // Extracted so we can use hooks inside ConnectButton.Custom render
 function WalletButtons({
   mounted, connected, chainUnsupported, accountDisplayName,
-  openConnectModal, openAccountModal,
+  openConnectModal, openAccountModal, openChainModal,
 }: {
   mounted: boolean;
   connected: boolean;
@@ -53,6 +53,7 @@ function WalletButtons({
   accountDisplayName?: string;
   openConnectModal: () => void;
   openAccountModal: () => void;
+  openChainModal: () => void;
 }) {
   const [networkModalOpen, setNetworkModalOpen] = useState(false);
 
@@ -62,17 +63,19 @@ function WalletButtons({
     return (
       <>
         <button
-          onClick={() => setNetworkModalOpen(true)}
+          onClick={openChainModal}
           className="flex items-center gap-2 px-4 py-[9px] rounded-xl transition-all hover:opacity-80"
           style={{ ...walletBtnStyle, border: "2px solid #ef4444", color: "#ef4444" }}
         >
-          <span className="text-sm font-semibold">Wrong Network</span>
+          <span className="text-sm font-semibold">Switch to Arbitrum</span>
         </button>
         <NetworkSwitcherModal
           open={networkModalOpen}
           onClose={() => setNetworkModalOpen(false)}
           onConnectEVM={openConnectModal}
           onManageEVM={openAccountModal}
+          chainUnsupported={true}
+          onSwitchChain={openChainModal}
         />
       </>
     );
@@ -234,6 +237,7 @@ export function Header() {
                   accountDisplayName={account?.displayName}
                   openConnectModal={openConnectModal}
                   openAccountModal={openAccountModal}
+                  openChainModal={openChainModal}
                 />
               );
             }}

@@ -45,13 +45,15 @@ interface Props {
   onClose: () => void;
   onConnectEVM: () => void;
   onManageEVM: () => void;
+  chainUnsupported?: boolean;
+  onSwitchChain?: () => void;
 }
 
 function truncate(addr: string, head = 6, tail = 4) {
   return `${addr.slice(0, head)}…${addr.slice(-tail)}`;
 }
 
-export function NetworkSwitcherModal({ open, onClose, onConnectEVM, onManageEVM }: Props) {
+export function NetworkSwitcherModal({ open, onClose, onConnectEVM, onManageEVM, chainUnsupported, onSwitchChain }: Props) {
   const { isConnected: evmConnected, address: evmAddress } = useAccount();
   const { connected: solanaConnected, publicKey, wallets, select, disconnect: solanaDisconnect } = useWallet();
 
@@ -60,7 +62,9 @@ export function NetworkSwitcherModal({ open, onClose, onConnectEVM, onManageEVM 
   );
 
   function handleArbitrumClick() {
-    if (evmConnected) {
+    if (chainUnsupported && onSwitchChain) {
+      onSwitchChain(); // opens RainbowKit chain switcher to switch to Arbitrum
+    } else if (evmConnected) {
       onManageEVM();
     } else {
       onConnectEVM();
@@ -100,7 +104,12 @@ export function NetworkSwitcherModal({ open, onClose, onConnectEVM, onManageEVM 
               {evmConnected && evmAddress ? truncate(evmAddress) : "EVM — XAUt0, PAXG"}
             </div>
           </div>
-          {evmConnected ? (
+          {evmConnected && chainUnsupported ? (
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span className="text-xs font-medium text-amber-600">Wrong Network</span>
+            </div>
+          ) : evmConnected ? (
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span className="text-xs font-medium text-emerald-600">Connected</span>

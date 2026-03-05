@@ -11,6 +11,14 @@ import { SlippageSettings } from "./SlippageSettings";
 import { SwapButton } from "./SwapButton";
 import { SwapStatusModal } from "./SwapStatusModal";
 import { OUTPUT_TOKENS } from "@/config/tokens";
+import type { OutputTokenKey } from "@/config/tokens";
+
+const TOKEN_DISCLAIMERS: Record<OutputTokenKey, string> = {
+  XAUT: "XAUt0 is Tether Gold bridged to Arbitrum via LayerZero OFT. Verify contract addresses before transacting.",
+  PAXG: "PAXG is PAX Gold on Arbitrum. Verify contract addresses before transacting.",
+  TSLAX: "TSLAx is a tokenized Tesla equity on Solana. Verify contract addresses before transacting.",
+  USDG: "USDG is a Garden Finance USD stablecoin on Solana. Verify contract addresses before transacting.",
+};
 
 // Arrow down icon
 function ArrowDown() {
@@ -126,6 +134,11 @@ export function SwapInterface() {
         }}
         onReset={handleReset}
       />
+
+      {/* Per-token disclaimer */}
+      <p className="text-center text-[10px] leading-relaxed pt-2" style={{ color: "#b0adc4" }}>
+        {TOKEN_DISCLAIMERS[outputToken]}
+      </p>
     </>
   );
 }
