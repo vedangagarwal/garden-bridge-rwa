@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const JUPITER_BASE = "https://api.jup.ag/swap/v1";
-
 /**
  * Server-side proxy for Jupiter swap transaction endpoint.
- * Keeps the API key server-side (JUPITER_API_KEY, not NEXT_PUBLIC_).
+ *
+ * Uses api.jup.ag (requires JUPITER_API_KEY) when the key is set,
+ * otherwise falls back to lite-api.jup.ag which works without auth.
  */
 export async function POST(req: NextRequest) {
   const apiKey =
     process.env.JUPITER_API_KEY ||
     process.env.NEXT_PUBLIC_JUPITER_API_KEY ||
     "";
+
+  // Use the paid endpoint when we have an API key; lite-api otherwise (no auth needed)
+  const JUPITER_BASE = apiKey
+    ? "https://api.jup.ag/swap/v1"
+    : "https://lite-api.jup.ag/swap/v1";
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
