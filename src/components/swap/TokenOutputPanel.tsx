@@ -76,7 +76,7 @@ export function TokenOutputPanel() {
           <div className="mt-2 flex items-center justify-between">
             <span className="text-[11px]" style={{ color: "#b0adc4" }}>{tokenConfig.name}</span>
             <span className="text-[11px]" style={{ color: "#b0adc4" }}>
-              {isSolana ? "via Jupiter V6" : "via 1inch / Uniswap"}
+              {isSolana ? "via LiFi" : "via 1inch / Uniswap"}
             </span>
           </div>
         )}

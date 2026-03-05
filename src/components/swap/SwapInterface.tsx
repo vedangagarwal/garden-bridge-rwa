@@ -111,7 +111,7 @@ export function SwapInterface() {
           />
           <span className="text-[10px] tracking-wide" style={{ color: "#b0adc4" }}>
             {isSolana
-              ? "Powered by Garden Finance · Solana · Jupiter V6"
+              ? "Powered by Garden Finance · Solana · LiFi"
               : "Powered by Garden Finance · Arbitrum · 1inch"
             }
           </span>
