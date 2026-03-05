@@ -98,12 +98,19 @@ export function useLiFiSwap() {
       .transactionRequest.data;
 
     // Decode base64 → VersionedTransaction (no Buffer polyfill needed)
-    const binaryStr = atob(txData);
-    const bytes = new Uint8Array(binaryStr.length);
-    for (let i = 0; i < binaryStr.length; i++) {
-      bytes[i] = binaryStr.charCodeAt(i);
+    let tx: VersionedTransaction;
+    try {
+      const binaryStr = atob(txData);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      tx = VersionedTransaction.deserialize(bytes);
+    } catch (decodeErr: unknown) {
+      throw new Error(
+        `Failed to decode LiFi transaction: ${decodeErr instanceof Error ? decodeErr.message : String(decodeErr)}`
+      );
     }
-    const tx = VersionedTransaction.deserialize(bytes);
 
     // skipPreflight: LiFi already simulates the tx; avoids redundant public-RPC
     // preflight that can 403 or add latency.
