@@ -47,7 +47,7 @@ export function SwapInterface() {
 
   // Open modal when swap starts; keep closed for terminal states
   useEffect(() => {
-    const terminalStates = ["idle", "complete", "failed", "bridge_jupiter_failed"];
+    const terminalStates = ["idle", "complete", "failed", "bridge_lifi_failed"];
     if (!terminalStates.includes(session.status)) {
       setModalOpen(true);
     }
@@ -134,7 +134,7 @@ export function SwapInterface() {
           if (
             session.status === "complete" ||
             session.status === "failed" ||
-            session.status === "bridge_jupiter_failed"
+            session.status === "bridge_lifi_failed"
           ) setModalOpen(false);
         }}
         onReset={handleReset}

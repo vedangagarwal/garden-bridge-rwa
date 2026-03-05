@@ -10,7 +10,7 @@ export type SwapStatus =
   | "approving"
   | "swapping"
   | "complete"
-  | "bridge_jupiter_failed"
+  | "bridge_lifi_failed"
   | "failed"
   | "refunding";
 
@@ -29,9 +29,9 @@ export interface SwapSession {
   btcConfirmations: number;
   btcRequiredConfirmations: number;
   btcSentTxId: string | null;
-  /** Solana path: Jupiter transaction signature */
+  /** Solana path: LiFi transaction signature */
   solanaSignature: string | null;
-  /** Solana path: USDC amount sitting in wallet after bridge, pending Jupiter swap */
+  /** Solana path: USDC amount sitting in wallet after bridge, pending LiFi swap */
   usdcInWallet: string | null;
 }
 
@@ -65,6 +65,6 @@ export interface CombinedQuote {
   priceImpact: string;
   /** Which output token this quote is for */
   outputToken: OutputTokenKey;
-  /** Raw Jupiter quote response (Solana path only) */
-  jupiterQuote?: unknown;
+  /** Raw DEX quote response (Solana path only) */
+  dexQuote?: unknown;
 }

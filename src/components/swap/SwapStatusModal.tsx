@@ -22,15 +22,15 @@ export function SwapStatusModal({ open, session, onClose, onReset }: Props) {
 
   const isDone = status === "complete";
   const isFailed = status === "failed" || status === "refunding";
-  const isJupiterFailed = status === "bridge_jupiter_failed";
-  const canDismiss = isDone || isFailed || isJupiterFailed;
+  const isLiFiFailed = status === "bridge_lifi_failed";
+  const canDismiss = isDone || isFailed || isLiFiFailed;
 
   const tokenConfig = OUTPUT_TOKENS[outputToken];
   const isSolana = tokenConfig.network === "solana";
 
   const modalTitle = isDone
     ? "Swap Complete 🎉"
-    : isJupiterFailed
+    : isLiFiFailed
     ? "Bridge Succeeded ⚠️"
     : isFailed
     ? "Swap Failed"
@@ -89,7 +89,7 @@ export function SwapStatusModal({ open, session, onClose, onReset }: Props) {
         )}
 
         {/* ── Bridge succeeded but LiFi swap failed — USDC is safe ── */}
-        {isJupiterFailed && (
+        {isLiFiFailed && (
           <div style={{
             borderRadius: 16,
             border: "1.5px solid rgba(245,158,11,0.35)",
@@ -182,7 +182,7 @@ export function SwapStatusModal({ open, session, onClose, onReset }: Props) {
                 New Swap
               </Button>
             )}
-            {(isFailed || isJupiterFailed) && (
+            {(isFailed || isLiFiFailed) && (
               <Button variant="primary" size="md" onClick={onReset} className="flex-1">
                 Try Again
               </Button>

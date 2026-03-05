@@ -18,7 +18,7 @@ export function DexSwapStatusCard({ session }: Props) {
   const isSolana = tokenConfig.network === "solana";
 
   const isDone = status === "complete";
-  const isError = status === "bridge_jupiter_failed";
+  const isError = status === "bridge_lifi_failed";
   const isActive = ["bridge_complete", "approving", "swapping"].includes(status);
   const isPending = ["idle", "quoting", "awaiting_deposit", "confirming", "bridging"].includes(status);
 

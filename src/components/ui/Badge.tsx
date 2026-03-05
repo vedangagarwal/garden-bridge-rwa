@@ -16,7 +16,7 @@ const labels: Record<SwapStatus, string> = {
   approving: "Approving",
   swapping: "Swapping",
   complete: "Complete",
-  bridge_jupiter_failed: "Bridge OK / Swap Failed",
+  bridge_lifi_failed: "Bridge OK / Swap Failed",
   failed: "Failed",
   refunding: "Refunding",
 };
@@ -31,7 +31,7 @@ const styles: Record<SwapStatus, string> = {
   approving: "bg-orange-500/10 text-orange-400",
   swapping: "bg-indigo-500/10 text-indigo-400",
   complete: "bg-emerald-500/10 text-emerald-400",
-  bridge_jupiter_failed: "bg-amber-500/10 text-amber-600",
+  bridge_lifi_failed: "bg-amber-500/10 text-amber-600",
   failed: "bg-red-500/10 text-red-400",
   refunding: "bg-rose-500/10 text-rose-400",
 };
@@ -39,7 +39,7 @@ const styles: Record<SwapStatus, string> = {
 const dots: Record<SwapStatus, boolean> = {
   idle: false, quoting: true, awaiting_deposit: true, confirming: true,
   bridging: true, bridge_complete: false, approving: true, swapping: true,
-  complete: false, bridge_jupiter_failed: false, failed: false, refunding: true,
+  complete: false, bridge_lifi_failed: false, failed: false, refunding: true,
 };
 
 export function StatusBadge({ status }: BadgeProps) {

@@ -44,7 +44,7 @@ export function QuoteDisplay() {
       style={{ background: "#f5f3fc", border: "1px solid #e8e4f2" }}
     >
       <Row label="Garden bridge fee" value={`${quote.gardenFee} bps`} mono />
-      <Row label={isSolana ? "Jupiter fee" : "DEX swap fee"} value={`${quote.dexFee}%`} mono />
+      <Row label={isSolana ? "LiFi fee" : "DEX swap fee"} value={`${quote.dexFee}%`} mono />
       <Row
         label={isSolana ? "USDC intermediate" : "WBTC intermediate"}
         value={intermediateOut}

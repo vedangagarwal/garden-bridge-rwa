@@ -11,7 +11,7 @@ import type { InputTokenSymbol, OutputTokenKey } from "@/config/tokens";
 /** Garden Finance minimum swap: 0.0001 BTC / WBTC (10,000 sats ≈ $10) */
 const MIN_AMOUNT_BTC = 0.0001;
 
-/** Solana output tokens that go through Jupiter (USDC → token) */
+/** Solana output tokens (USDC → token preview via Jupiter lite, actual swap via LiFi) */
 const SOLANA_TOKENS = new Set<OutputTokenKey>(["TSLAX", "USDG"]);
 
 function getSolanaMintAndDecimals(outputToken: OutputTokenKey): { mint: string; decimals: number } {
@@ -67,15 +67,15 @@ export function useSwapQuote() {
         let xautAmount: string;
         let pricePerBtc: string;
         let priceImpact = "0";
-        let jupiterQuote: unknown = undefined;
+        let dexQuote: unknown = undefined;
 
         if (isSolana) {
-          // Jupiter: USDC → output token (TSLAx or USDG)
+          // Jupiter lite-api used for preview only; actual swap uses LiFi
           const { mint, decimals } = getSolanaMintAndDecimals(outputToken);
           const usdcBigInt = BigInt(Math.round(parseFloat(intermediateAmount)));
           const jupResult = await fetchJupiterQuote(usdcBigInt, mint, decimals);
           xautAmount = jupResult.amountOut;
-          jupiterQuote = jupResult.rawQuote;
+          dexQuote = jupResult.rawQuote;
           priceImpact = jupResult.priceImpact;
           const outFloat = parseFloat(jupResult.amountOutHuman);
           const btcFloat = parseFloat(amount);
@@ -117,7 +117,7 @@ export function useSwapQuote() {
           pricePerBtc,
           priceImpact,
           outputToken,
-          jupiterQuote,
+          dexQuote,
         };
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Quote failed";

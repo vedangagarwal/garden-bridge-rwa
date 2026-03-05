@@ -8,11 +8,11 @@ interface StepIndicatorProps {
 
 const STEP1_ACTIVE: SwapStatus[] = ["awaiting_deposit", "confirming", "bridging"];
 const STEP1_DONE: SwapStatus[] = [
-  "bridge_complete", "approving", "swapping", "complete", "bridge_jupiter_failed",
+  "bridge_complete", "approving", "swapping", "complete", "bridge_lifi_failed",
 ];
 const STEP2_ACTIVE: SwapStatus[] = ["approving", "swapping", "bridge_complete"];
 const STEP2_DONE: SwapStatus[] = ["complete"];
-const STEP2_ERROR: SwapStatus[] = ["bridge_jupiter_failed"];
+const STEP2_ERROR: SwapStatus[] = ["bridge_lifi_failed"];
 
 function getStepState(
   status: SwapStatus,

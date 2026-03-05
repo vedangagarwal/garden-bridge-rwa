@@ -85,7 +85,7 @@ export function useSwapOrchestrator() {
       });
 
       if (isSolana) {
-        // Solana path: Solana USDC → TSLAx / USDG via Jupiter
+        // Solana path: Solana USDC → TSLAx / USDG via LiFi
         setStatus("swapping");
 
         // Safe integer parsing — strip any decimal point Garden may include
@@ -122,7 +122,7 @@ export function useSwapOrchestrator() {
             `Swap manually at app.li.fi using your Solana wallet.`;
 
           setSession({
-            status: "bridge_jupiter_failed",
+            status: "bridge_lifi_failed",
             usdcInWallet: usdcHuman,
             errorMessage: errMsg,
           });

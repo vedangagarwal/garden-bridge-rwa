@@ -31,7 +31,7 @@ export function BridgeStatusCard({ session, onBtcSent }: Props) {
   const [localTxId, setLocalTxId] = useState<string | null>(btcSentTxId);
 
   const isDone = [
-    "bridge_complete", "approving", "swapping", "complete", "bridge_jupiter_failed",
+    "bridge_complete", "approving", "swapping", "complete", "bridge_lifi_failed",
   ].includes(status);
   const isActive = ["awaiting_deposit", "confirming", "bridging"].includes(status);
 
