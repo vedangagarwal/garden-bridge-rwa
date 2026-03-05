@@ -48,7 +48,7 @@ export async function fetchLiFiQuote(
     toAddress: fromAddress,
     slippage: "0.03",          // 3% slippage for exotic synthetic tokens
     integrator: "garden-rwa-bridge",
-    order: "BEST_VALUE",
+    order: "RECOMMENDED",
   });
 
   const res = await fetch(`/api/lifi-quote?${params}`, { cache: "no-store" });
