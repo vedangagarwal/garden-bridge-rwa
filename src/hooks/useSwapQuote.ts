@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { useGarden } from "@gardenfi/react-hooks";
 import { GARDEN_ASSETS } from "@/lib/garden/assets";
 import { getOneInchQuote } from "@/lib/dex/oneInch";
-import { fetchJupiterQuote } from "@/lib/dex/jupiter";
+import { fetchLiFiQuote } from "@/lib/dex/lifi";
 import { OUTPUT_TOKENS } from "@/config/tokens";
 import { TSLAX_MINT, TSLAX_DECIMALS, USDG_MINT, USDG_DECIMALS } from "@/lib/solana/config";
 import type { CombinedQuote } from "@/types/swap";
@@ -11,8 +11,16 @@ import type { InputTokenSymbol, OutputTokenKey } from "@/config/tokens";
 /** Garden Finance minimum swap: 0.0001 BTC / WBTC (10,000 sats ≈ $10) */
 const MIN_AMOUNT_BTC = 0.0001;
 
-/** Solana output tokens (USDC → token preview via Jupiter lite, actual swap via LiFi) */
+/** Solana output tokens — preview AND actual swap both use LiFi */
 const SOLANA_TOKENS = new Set<OutputTokenKey>(["TSLAX", "USDG"]);
+
+/**
+ * Throwaway address used when fetching a LiFi preview quote.
+ * LiFi needs fromAddress to build the tx, but for display purposes any
+ * valid base58 Solana address is fine. The real address is used when
+ * executeLiFiSwap() is called during the actual swap.
+ */
+const LIFI_QUOTE_DUMMY_ADDRESS = "11111111111111111111111111111111";
 
 function getSolanaMintAndDecimals(outputToken: OutputTokenKey): { mint: string; decimals: number } {
   if (outputToken === "USDG") return { mint: USDG_MINT, decimals: USDG_DECIMALS };
@@ -70,14 +78,20 @@ export function useSwapQuote() {
         let dexQuote: unknown = undefined;
 
         if (isSolana) {
-          // Jupiter lite-api used for preview only; actual swap uses LiFi
+          // LiFi used for preview quote (same API as the real swap — no Jupiter dependency)
           const { mint, decimals } = getSolanaMintAndDecimals(outputToken);
           const usdcBigInt = BigInt(Math.round(parseFloat(intermediateAmount)));
-          const jupResult = await fetchJupiterQuote(usdcBigInt, mint, decimals);
-          xautAmount = jupResult.amountOut;
-          dexQuote = jupResult.rawQuote;
-          priceImpact = jupResult.priceImpact;
-          const outFloat = parseFloat(jupResult.amountOutHuman);
+          const lifiResult = await fetchLiFiQuote(
+            usdcBigInt,
+            mint,
+            decimals,
+            LIFI_QUOTE_DUMMY_ADDRESS
+          );
+          // rawQuote.estimate.toAmount is the raw output in smallest token units
+          xautAmount = lifiResult.rawQuote.estimate?.toAmount ?? "0";
+          dexQuote = lifiResult.rawQuote;
+          priceImpact = "0"; // LiFi doesn't expose a price-impact % directly
+          const outFloat = parseFloat(lifiResult.amountOutHuman);
           const btcFloat = parseFloat(amount);
           pricePerBtc = btcFloat > 0 ? (outFloat / btcFloat).toFixed(6) : "0";
         } else {
@@ -111,7 +125,7 @@ export function useSwapQuote() {
           gardenReceiveAmount: intermediateAmount,
           xautAmount,
           gardenFee: best.fee,
-          dexFee: isSolana ? "0.1" : "0.875",
+          dexFee: isSolana ? "0.35" : "0.875",  // LiFi typical fee ~0.35% on Solana
           estimatedTimeSeconds: best.estimated_time + 30,
           solverId: best.solver_id,
           pricePerBtc,
