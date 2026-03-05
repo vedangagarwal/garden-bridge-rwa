@@ -97,20 +97,22 @@ export function useLiFiSwap() {
     const txData = (rawQuote as { transactionRequest: { data: string } })
       .transactionRequest.data;
 
-    // Decode base64 → VersionedTransaction (no Buffer polyfill needed)
-    let tx: VersionedTransaction;
-    try {
-      const binaryStr = atob(txData);
-      const bytes = new Uint8Array(binaryStr.length);
-      for (let i = 0; i < binaryStr.length; i++) {
-        bytes[i] = binaryStr.charCodeAt(i);
+    // Decode base64 → VersionedTransaction (no Buffer polyfill needed).
+    // IIFE keeps `tx` as a const so TypeScript never worries about definite assignment.
+    const tx = (() => {
+      try {
+        const binaryStr = atob(txData);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+        return VersionedTransaction.deserialize(bytes);
+      } catch (decodeErr: unknown) {
+        throw new Error(
+          `Failed to decode LiFi transaction: ${decodeErr instanceof Error ? decodeErr.message : String(decodeErr)}`
+        );
       }
-      tx = VersionedTransaction.deserialize(bytes);
-    } catch (decodeErr: unknown) {
-      throw new Error(
-        `Failed to decode LiFi transaction: ${decodeErr instanceof Error ? decodeErr.message : String(decodeErr)}`
-      );
-    }
+    })();
 
     // skipPreflight: LiFi already simulates the tx; avoids redundant public-RPC
     // preflight that can 403 or add latency.
