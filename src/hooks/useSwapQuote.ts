@@ -78,7 +78,7 @@ export function useSwapQuote() {
         let dexQuote: unknown = undefined;
 
         if (isSolana) {
-          // LiFi used for preview quote (same API as the real swap — no Jupiter dependency)
+          // LiFi used for preview quote — same API as the real swap
           const { mint, decimals } = getSolanaMintAndDecimals(outputToken);
           const usdcBigInt = BigInt(Math.round(parseFloat(intermediateAmount)));
           const lifiResult = await fetchLiFiQuote(
