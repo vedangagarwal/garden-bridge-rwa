@@ -225,7 +225,7 @@ export function Header() {
         <div className="flex items-center gap-2">
           <BitcoinWalletButton />
           <ConnectButton.Custom>
-            {({ account, chain, openAccountModal, openConnectModal, mounted }) => {
+            {({ account, chain, openAccountModal, openConnectModal, openChainModal, mounted }) => {
               const ready = mounted;
               const connected = ready && account && chain;
 
