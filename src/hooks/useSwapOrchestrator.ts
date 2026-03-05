@@ -33,6 +33,11 @@ export function useSwapOrchestrator() {
   async function startSwap() {
     if (!address || !quote) return;
 
+    // BTC wallet is always required (Garden needs a valid BTC refund address)
+    if (!btcAddress) {
+      throw new Error("Please connect your Bitcoin wallet before swapping.");
+    }
+
     const inputAmount = useSwapStore.getState().inputAmount;
     const amountSats = Math.round(parseFloat(inputAmount) * 1e8);
 
