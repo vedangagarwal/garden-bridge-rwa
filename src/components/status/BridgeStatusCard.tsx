@@ -205,8 +205,22 @@ export function BridgeStatusCard({ session, onBtcSent }: Props) {
               width: `${Math.min(100, (btcConfirmations / btcRequiredConfirmations) * 100)}%`,
             }} />
           </div>
-          <p style={{ fontSize: 11, color: "#b0adc4", marginTop: 8, marginBottom: 0 }}>
-            Bitcoin network confirming your transaction…
+          {/* Show mempool link + reassurance when BTC tx is known but confirmations still 0 */}
+          {txId && (
+            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 11, color: "#22c55e" }}>✓ BTC sent:</span>
+              <a
+                href={`https://mempool.space/tx/${txId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 11, fontFamily: "monospace", color: "#6B5DD3" }}
+              >
+                {txId.slice(0, 8)}…{txId.slice(-6)} ↗
+              </a>
+            </div>
+          )}
+          <p style={{ fontSize: 11, color: "#b0adc4", marginTop: 6, marginBottom: 0 }}>
+            Waiting for Garden Finance to detect the confirmation. This can take up to 15 minutes — keep this tab open.
           </p>
         </div>
       )}
