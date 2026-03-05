@@ -112,13 +112,13 @@ export function useSwapOrchestrator() {
             status: "complete",
             errorMessage: null,
           });
-        } catch (jupErr: unknown) {
+        } catch (lifiErr: unknown) {
           // Bridge succeeded but LiFi swap failed.
           // The user's USDC is safely in their Solana wallet — inform them clearly.
-          const jupMsg = jupErr instanceof Error ? jupErr.message : "LiFi swap failed";
+          const lifiMsg = lifiErr instanceof Error ? lifiErr.message : "LiFi swap failed";
           const errMsg =
             `Bridge succeeded ✓ — ${usdcHuman} USDC is safe in your Solana wallet.\n` +
-            `LiFi swap failed: ${jupMsg}\n` +
+            `LiFi swap failed: ${lifiMsg}\n` +
             `Swap manually at app.li.fi using your Solana wallet.`;
 
           setSession({
@@ -140,7 +140,7 @@ export function useSwapOrchestrator() {
             dexTxHash: null,
             gardenOrderId: s.gardenOrderId,
             status: "failed",
-            errorMessage: `Bridge OK — ${usdcHuman} USDC in Solana wallet. LiFi failed: ${jupMsg}`,
+            errorMessage: `Bridge OK — ${usdcHuman} USDC in Solana wallet. LiFi failed: ${lifiMsg}`,
           });
         }
       } else {

@@ -1,5 +1,6 @@
+import { SOLANA_USDC_MINT } from "@/lib/solana/config";
+
 const SOLANA_CHAIN = "SOL";
-const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
 export interface LiFiRoute {
   transactionRequest?: {
@@ -41,7 +42,7 @@ export async function fetchLiFiQuote(
   const params = new URLSearchParams({
     fromChain: SOLANA_CHAIN,
     toChain: SOLANA_CHAIN,
-    fromToken: USDC_MINT,
+    fromToken: SOLANA_USDC_MINT,
     toToken: toMint,
     fromAmount: fromAmount.toString(),
     fromAddress,

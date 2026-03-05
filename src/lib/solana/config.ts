@@ -13,4 +13,3 @@ export const USDG_MINT =
 export const SOLANA_USDC_DECIMALS = 6;
 export const TSLAX_DECIMALS = 8;
 export const USDG_DECIMALS = 6;
-export const SOLANA_POLL_INTERVAL_MS = 5000;
