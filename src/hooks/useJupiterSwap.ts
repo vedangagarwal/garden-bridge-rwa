@@ -10,12 +10,13 @@ function getMintAndDecimals(outputTokenKey: OutputTokenKey): { mint: string; dec
 }
 
 /**
- * Poll getSignatureStatuses every 2 s for up to 3 minutes.
+ * Poll getSignatureStatus every 2 s for up to 3 minutes.
  *
- * IMPORTANT: do NOT pass searchTransactionHistory:true — the public Solana
- * RPC (api.mainnet-beta.solana.com) returns 403 Access Forbidden for that
- * option. For a freshly-submitted transaction it is not needed anyway since
- * the signature is still in the node's recent signatures cache.
+ * Key design decisions:
+ * 1. No searchTransactionHistory — public RPC can 403 on that param.
+ * 2. Transient RPC errors (403, 429, network blip) are caught per-attempt
+ *    and retried — a single RPC hiccup must not kill the whole swap.
+ * 3. Only genuine on-chain execution errors or a 3-minute timeout throw.
  */
 async function pollForConfirmation(
   connection: import("@solana/web3.js").Connection,
@@ -23,27 +24,52 @@ async function pollForConfirmation(
 ): Promise<void> {
   const POLL_INTERVAL_MS = 2_000;
   const MAX_ATTEMPTS = 90; // 90 × 2 s = 3 minutes
+  let consecutiveErrors = 0;
+  const MAX_CONSECUTIVE_ERRORS = 10; // give up only after 10 consecutive RPC failures (~20 s)
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    // No searchTransactionHistory flag — public RPC forbids it (returns 403)
-    const { value } = await connection.getSignatureStatus(signature);
+    try {
+      // No searchTransactionHistory — public RPC returns 403 for that option
+      const { value } = await connection.getSignatureStatus(signature);
+      consecutiveErrors = 0; // reset on success
 
-    if (value !== null) {
-      // Transaction found on-chain — check for execution errors
-      if (value.err) {
-        throw new Error(
-          `Jupiter transaction rejected on-chain: ${JSON.stringify(value.err)}`
-        );
+      if (value !== null) {
+        // Transaction found on-chain — check for execution errors
+        if (value.err) {
+          throw new Error(
+            `Jupiter transaction rejected on-chain: ${JSON.stringify(value.err)}`
+          );
+        }
+        if (
+          value.confirmationStatus === "confirmed" ||
+          value.confirmationStatus === "finalized"
+        ) {
+          return; // ✓ confirmed
+        }
+        // "processed" — keep polling until confirmed/finalized
       }
-      if (
-        value.confirmationStatus === "confirmed" ||
-        value.confirmationStatus === "finalized"
-      ) {
-        return; // ✓ success
+      // null = not visible yet — keep polling
+    } catch (rpcErr: unknown) {
+      // Distinguish permanent on-chain errors from transient RPC errors
+      const msg = rpcErr instanceof Error ? rpcErr.message : String(rpcErr);
+      if (msg.startsWith("Jupiter transaction rejected on-chain:")) {
+        throw rpcErr; // real on-chain failure — surface immediately
+      }
+      // Transient error (403, 429, network blip) — log and keep polling
+      consecutiveErrors++;
+      console.warn(
+        `[Jupiter] RPC poll attempt ${attempt + 1} failed (${consecutiveErrors} consecutive): ${msg}`
+      );
+      if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+        throw new Error(
+          `RPC unavailable after ${MAX_CONSECUTIVE_ERRORS} consecutive errors. ` +
+          `Last error: ${msg}. ` +
+          `Check signature on Solscan: ${signature}`
+        );
       }
     }
 
-    // Not yet visible — wait before next poll (skip wait on final attempt)
+    // Wait before next attempt (skip on last)
     if (attempt < MAX_ATTEMPTS - 1) {
       await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
     }
@@ -82,13 +108,15 @@ export function useJupiterSwap() {
 
     const tx = VersionedTransaction.deserialize(bytes);
 
-    // Send with automatic retry on transient RPC drops
+    // skipPreflight:true — Jupiter already simulated this tx; skipping avoids
+    // a redundant public-RPC preflight that can itself 403 or add latency.
     const signature = await sendTransaction(tx, connection, {
-      skipPreflight: false,
+      skipPreflight: true,
       maxRetries: 3,
     });
 
-    // Poll until confirmed (up to 3 min) — avoids the 30-second timeout of the legacy API
+    // Poll until confirmed — swallows transient RPC errors, throws only on
+    // genuine on-chain rejection or 3-minute timeout.
     await pollForConfirmation(connection, signature);
 
     return { signature, outputAmount: quote.amountOutHuman };
