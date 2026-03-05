@@ -20,7 +20,7 @@ export async function fetchJupiterQuote(
     inputMint: SOLANA_USDC_MINT,
     outputMint,
     amount: usdcAmountRaw.toString(),
-    slippageBps: "50",
+    slippageBps: "300",
   });
 
   const res = await fetch(`/api/jupiter-quote?${params}`);

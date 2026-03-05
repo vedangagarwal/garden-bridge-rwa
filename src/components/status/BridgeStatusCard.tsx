@@ -30,7 +30,9 @@ export function BridgeStatusCard({ session, onBtcSent }: Props) {
   const [sending, setSending] = useState(false);
   const [localTxId, setLocalTxId] = useState<string | null>(btcSentTxId);
 
-  const isDone = ["bridge_complete", "approving", "swapping", "complete"].includes(status);
+  const isDone = [
+    "bridge_complete", "approving", "swapping", "complete", "bridge_jupiter_failed",
+  ].includes(status);
   const isActive = ["awaiting_deposit", "confirming", "bridging"].includes(status);
 
   async function copyAddress() {
@@ -56,35 +58,65 @@ export function BridgeStatusCard({ session, onBtcSent }: Props) {
 
   const txId = localTxId ?? btcSentTxId;
 
+  const cardStyle: React.CSSProperties = {
+    borderRadius: 16,
+    border: isDone
+      ? "1.5px solid rgba(34,197,94,0.25)"
+      : isActive
+      ? "1.5px solid rgba(107,93,211,0.2)"
+      : "1.5px solid #e8e4f2",
+    background: isDone
+      ? "rgba(34,197,94,0.04)"
+      : isActive
+      ? "rgba(107,93,211,0.04)"
+      : "#fafafa",
+    padding: "14px 16px",
+    opacity: !isDone && !isActive ? 0.5 : 1,
+    transition: "all 0.3s",
+  };
+
   return (
-    <div className={`rounded-2xl border p-4 transition-all duration-300 ${
-      isDone ? "border-emerald-500/20 bg-emerald-500/5" :
-      isActive ? "border-[#d4af37]/20 bg-[#d4af37]/5" :
-      "border-white/5 bg-white/2 opacity-40"
-    }`}>
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-semibold uppercase tracking-widest text-white/40">
+    <div style={cardStyle}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", color: "#8b88a0" }}>
           Step 1 — Garden Bridge
         </span>
         {isDone ? (
-          <span className="text-xs text-emerald-400 font-medium">✓ Done</span>
+          <span style={{ fontSize: 12, color: "#22c55e", fontWeight: 600 }}>✓ Done</span>
         ) : isActive ? (
-          <Spinner size="sm" gold />
+          <Spinner size="sm" />
         ) : null}
       </div>
 
       {status === "awaiting_deposit" && depositAddress && (
-        <div className="space-y-3">
-          <p className="text-xs text-white/50">Send BTC to this address:</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <p style={{ fontSize: 12, color: "#4a4568", margin: 0 }}>Send BTC to this address:</p>
 
           {/* Address + copy */}
-          <div className="bg-black/40 rounded-xl p-3 border border-white/5 flex items-start gap-2">
-            <p className="text-xs font-mono text-[#d4af37] break-all leading-relaxed flex-1">
+          <div style={{
+            background: "#f5f3fc",
+            borderRadius: 10,
+            padding: "10px 12px",
+            border: "1px solid #e8e4f2",
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 8,
+          }}>
+            <p style={{ fontSize: 11, fontFamily: "monospace", color: "#6B5DD3", wordBreak: "break-all", lineHeight: 1.5, flex: 1, margin: 0 }}>
               {depositAddress}
             </p>
             <button
               onClick={copyAddress}
-              className="flex-shrink-0 text-xs text-white/30 hover:text-white/70 transition px-2 py-0.5 rounded border border-white/10 hover:border-white/20"
+              style={{
+                flexShrink: 0,
+                fontSize: 11,
+                color: "#8b88a0",
+                background: "white",
+                border: "1px solid #e8e4f2",
+                borderRadius: 6,
+                padding: "2px 8px",
+                cursor: "pointer",
+              }}
             >
               {copied ? "✓" : "Copy"}
             </button>
@@ -92,12 +124,12 @@ export function BridgeStatusCard({ session, onBtcSent }: Props) {
 
           {/* Amount */}
           {depositAmountSats != null && (
-            <div className="flex items-center gap-2 text-xs text-white/40">
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#8b88a0" }}>
               <span>Amount:</span>
-              <span className="font-mono text-white/70">
+              <span style={{ fontFamily: "monospace", color: "#1a1028", fontWeight: 600 }}>
                 {(depositAmountSats / 1e8).toFixed(8)} BTC
               </span>
-              <span className="text-white/25">({depositAmountSats.toLocaleString()} sats)</span>
+              <span style={{ color: "#b0adc4" }}>({depositAmountSats.toLocaleString()} sats)</span>
             </div>
           )}
 
@@ -106,31 +138,40 @@ export function BridgeStatusCard({ session, onBtcSent }: Props) {
             <button
               onClick={handleSendViaWallet}
               disabled={sending}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#f7931a]/10 border border-[#f7931a]/30 hover:bg-[#f7931a]/20 transition text-sm font-medium text-[#f7931a] disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: "10px",
+                borderRadius: 10,
+                background: "rgba(247,147,26,0.08)",
+                border: "1.5px solid rgba(247,147,26,0.3)",
+                color: "#f7931a",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: sending ? "not-allowed" : "pointer",
+                opacity: sending ? 0.6 : 1,
+              }}
             >
               {sending ? (
-                <>
-                  <Spinner size="sm" />
-                  Confirm in wallet…
-                </>
+                <><Spinner size="sm" /> Confirm in wallet…</>
               ) : (
-                <>
-                  <span>₿</span>
-                  Send via Wallet
-                </>
+                <><span>₿</span> Send via Wallet</>
               )}
             </button>
           )}
 
           {/* Tx sent confirmation */}
           {txId && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-emerald-400">✓ Sent:</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+              <span style={{ color: "#22c55e" }}>✓ Sent:</span>
               <a
                 href={`https://mempool.space/tx/${txId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-mono text-[#d4af37]/70 hover:text-[#d4af37] truncate max-w-[160px]"
+                style={{ fontFamily: "monospace", color: "#6B5DD3", opacity: 0.8 }}
               >
                 {txId.slice(0, 8)}…{txId.slice(-6)}
               </a>
@@ -138,10 +179,10 @@ export function BridgeStatusCard({ session, onBtcSent }: Props) {
           )}
 
           {sendingError && (
-            <p className="text-xs text-red-400">{sendingError}</p>
+            <p style={{ fontSize: 12, color: "#dc2626", margin: 0 }}>{sendingError}</p>
           )}
 
-          <p className="text-[11px] text-white/30">
+          <p style={{ fontSize: 11, color: "#b0adc4", margin: 0 }}>
             Waiting for your transaction to appear on-chain…
           </p>
         </div>
@@ -149,38 +190,44 @@ export function BridgeStatusCard({ session, onBtcSent }: Props) {
 
       {status === "confirming" && (
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-white/60">Confirmations</span>
-            <span className="text-xs font-mono text-[#d4af37]">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: "#4a4568" }}>Confirmations</span>
+            <span style={{ fontSize: 12, fontFamily: "monospace", color: "#6B5DD3", fontWeight: 600 }}>
               {btcConfirmations} / {btcRequiredConfirmations}
             </span>
           </div>
-          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-[#d4af37] to-[#f5c518] rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(100, (btcConfirmations / btcRequiredConfirmations) * 100)}%` }}
-            />
+          <div style={{ height: 6, background: "#f0edf8", borderRadius: 99, overflow: "hidden" }}>
+            <div style={{
+              height: "100%",
+              background: "linear-gradient(90deg, #6B5DD3, #a096e8)",
+              borderRadius: 99,
+              transition: "width 0.5s",
+              width: `${Math.min(100, (btcConfirmations / btcRequiredConfirmations) * 100)}%`,
+            }} />
           </div>
-          <p className="text-[11px] text-white/30 mt-2">Bitcoin network confirming your transaction…</p>
+          <p style={{ fontSize: 11, color: "#b0adc4", marginTop: 8, marginBottom: 0 }}>
+            Bitcoin network confirming your transaction…
+          </p>
         </div>
       )}
 
       {status === "bridging" && (
-        <p className="text-xs text-white/50">Solver executing bridge to Arbitrum…</p>
+        <p style={{ fontSize: 12, color: "#4a4568", margin: 0 }}>Solver executing bridge…</p>
       )}
 
       {isDone && bridgeTxHash && (
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-white/40">Redeem tx:</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 12, color: "#8b88a0" }}>Redeem tx:</span>
           <TxHashLink hash={bridgeTxHash} />
         </div>
       )}
 
       {isDone && session.gardenReceiveAmount && (
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-xs text-white/40">WBTC received:</span>
-          <span className="text-xs font-mono text-emerald-400">
-            {parseFloat(session.gardenReceiveAmount).toFixed(8)} WBTC
+        <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 12, color: "#8b88a0" }}>Received:</span>
+          <span style={{ fontSize: 12, fontFamily: "monospace", color: "#22c55e", fontWeight: 600 }}>
+            {/* Solana path: show raw USDC units converted; Arbitrum: show WBTC */}
+            {session.gardenReceiveAmount}
           </span>
         </div>
       )}

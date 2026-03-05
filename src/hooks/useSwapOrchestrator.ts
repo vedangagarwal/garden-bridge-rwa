@@ -85,26 +85,64 @@ export function useSwapOrchestrator() {
       });
 
       if (isSolana) {
-        // Solana path: Solana USDC → TSLAx via Jupiter
+        // Solana path: Solana USDC → TSLAx / USDG via Jupiter
         setStatus("swapping");
-        const usdcRaw = BigInt(Math.round(parseFloat(filledAmount)));
-        const { signature, outputAmount } = await executeJupiterSwap(usdcRaw, outputToken);
-        setSession({ status: "complete", solanaSignature: signature, xautReceived: outputAmount });
-        const s = useSwapStore.getState().session;
-        addRecord({
-          id: s.gardenOrderId ?? `swap-${Date.now()}`,
-          createdAt: s.createdAt ?? Date.now(),
-          inputToken: inputToken as InputTokenSymbol,
-          inputAmountSats: amountSats,
-          wbtcReceived: s.gardenReceiveAmount,
-          xautReceived: outputAmount,
-          btcSentTxId: s.btcSentTxId,
-          bridgeTxHash: s.bridgeTxHash,
-          dexTxHash: null,
-          gardenOrderId: s.gardenOrderId,
-          status: "complete",
-          errorMessage: null,
-        });
+
+        // Safe integer parsing — strip any decimal point Garden may include
+        const rawStr = filledAmount.toString().split(".")[0];
+        const usdcRaw = BigInt(rawStr);
+        // Human-readable USDC amount (6 decimals) for user-facing messages
+        const usdcHuman = (Number(rawStr) / 1e6).toFixed(2);
+
+        try {
+          const { signature, outputAmount } = await executeJupiterSwap(usdcRaw, outputToken);
+          setSession({ status: "complete", solanaSignature: signature, xautReceived: outputAmount });
+          const s = useSwapStore.getState().session;
+          addRecord({
+            id: s.gardenOrderId ?? `swap-${Date.now()}`,
+            createdAt: s.createdAt ?? Date.now(),
+            inputToken: inputToken as InputTokenSymbol,
+            inputAmountSats: amountSats,
+            wbtcReceived: s.gardenReceiveAmount,
+            xautReceived: outputAmount,
+            btcSentTxId: s.btcSentTxId,
+            bridgeTxHash: s.bridgeTxHash,
+            dexTxHash: null,
+            gardenOrderId: s.gardenOrderId,
+            status: "complete",
+            errorMessage: null,
+          });
+        } catch (jupErr: unknown) {
+          // Bridge succeeded but Jupiter swap failed.
+          // The user's USDC is safely in their Solana wallet — inform them clearly.
+          const jupMsg = jupErr instanceof Error ? jupErr.message : "Jupiter swap failed";
+          const errMsg =
+            `Bridge succeeded ✓ — ${usdcHuman} USDC is safe in your Solana wallet.\n` +
+            `Jupiter swap failed: ${jupMsg}\n` +
+            `Swap manually at jup.ag using your Solana wallet.`;
+
+          setSession({
+            status: "bridge_jupiter_failed",
+            usdcInWallet: usdcHuman,
+            errorMessage: errMsg,
+          });
+
+          const s = useSwapStore.getState().session;
+          addRecord({
+            id: s.gardenOrderId ?? `swap-${Date.now()}`,
+            createdAt: s.createdAt ?? Date.now(),
+            inputToken: inputToken as InputTokenSymbol,
+            inputAmountSats: amountSats,
+            wbtcReceived: s.gardenReceiveAmount,
+            xautReceived: null,
+            btcSentTxId: s.btcSentTxId,
+            bridgeTxHash: s.bridgeTxHash,
+            dexTxHash: null,
+            gardenOrderId: s.gardenOrderId,
+            status: "failed",
+            errorMessage: `Bridge OK — ${usdcHuman} USDC in Solana wallet. Jupiter failed: ${jupMsg}`,
+          });
+        }
       } else {
         // Arbitrum path: WBTC → XAUt0 or PAXG via 1inch/Uniswap
         const wbtcHuman = (parseFloat(filledAmount) / 1e8).toFixed(8);

@@ -10,6 +10,7 @@ export type SwapStatus =
   | "approving"
   | "swapping"
   | "complete"
+  | "bridge_jupiter_failed"
   | "failed"
   | "refunding";
 
@@ -30,6 +31,8 @@ export interface SwapSession {
   btcSentTxId: string | null;
   /** Solana path: Jupiter transaction signature */
   solanaSignature: string | null;
+  /** Solana path: USDC amount sitting in wallet after bridge, pending Jupiter swap */
+  usdcInWallet: string | null;
 }
 
 export const DEFAULT_SESSION: SwapSession = {
@@ -47,6 +50,7 @@ export const DEFAULT_SESSION: SwapSession = {
   btcRequiredConfirmations: 1,
   btcSentTxId: null,
   solanaSignature: null,
+  usdcInWallet: null,
 };
 
 export interface CombinedQuote {
