@@ -57,7 +57,7 @@ export const OUTPUT_TOKENS = {
     name: "PAX Gold",
     decimals: 18,
     network: "arbitrum" as const,
-    address: "0xF9151B81C3f31AdC3AB98Ac4c78Dd339F00dD51B" as `0x${string}`,
+    address: "0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429" as `0x${string}`,
     icon: "🏅",
     description: "Gold · Arbitrum",
   },
@@ -74,7 +74,7 @@ export const OUTPUT_TOKENS = {
   USDG: {
     key: "USDG" as const,
     symbol: "USDG",
-    name: "Garden USD",
+    name: "Global Dollar",
     decimals: 6,
     network: "solana" as const,
     mint: "2u1tszSeqZ3qBWF3uNGPFc8TzMk2tdiwknnRMWGWjGWH",
