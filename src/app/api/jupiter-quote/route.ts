@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
   try {
     const upstream = await fetch(`${JUPITER_BASE}/quote?${params}`, {
       headers,
-      next: { revalidate: 10 }, // cache for 10 s
+      cache: "no-store", // always fresh — a stale quote produces an aged blockhash in the swap tx
     });
 
     const data = await upstream.json();

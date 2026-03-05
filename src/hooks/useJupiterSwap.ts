@@ -10,52 +10,51 @@ function getMintAndDecimals(outputTokenKey: OutputTokenKey): { mint: string; dec
 }
 
 /**
- * Poll getSignatureStatus until confirmed/finalized or the blockhash expires.
- * This avoids the hardcoded 30-second timeout of the legacy confirmTransaction(sig, commitment) API.
+ * Poll getSignatureStatus every 2 s for up to 3 minutes.
+ *
+ * Why not use connection.confirmTransaction(sig, commitment)?
+ * That API has a hardcoded 30-second timeout and throws
+ * "Transaction was not confirmed in 30.00 seconds" even when the
+ * transaction has simply not yet propagated — causing false failures.
  */
-async function waitForConfirmation(
+async function pollForConfirmation(
   connection: import("@solana/web3.js").Connection,
-  signature: string,
-  blockhash: string,
-  lastValidBlockHeight: number
+  signature: string
 ): Promise<void> {
-  while (true) {
-    // Check if the blockhash has expired (transaction can no longer land)
-    const currentHeight = await connection.getBlockHeight("confirmed");
-    if (currentHeight > lastValidBlockHeight) {
-      // One last check — maybe it landed in the final blocks
-      const status = await connection.getSignatureStatus(signature);
-      if (
-        status?.value?.confirmationStatus === "confirmed" ||
-        status?.value?.confirmationStatus === "finalized"
-      ) {
-        if (status.value.err) {
-          throw new Error(`Transaction rejected on-chain: ${JSON.stringify(status.value.err)}`);
-        }
-        return; // confirmed!
-      }
-      throw new Error(
-        `Transaction expired (blockhash no longer valid). ` +
-        `Check signature ${signature} on Solscan to see if it landed.`
-      );
-    }
+  const POLL_INTERVAL_MS = 2_000;
+  const MAX_ATTEMPTS = 90; // 90 × 2 s = 3 minutes
 
-    // Poll signature status
-    const status = await connection.getSignatureStatus(signature, {
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const { value } = await connection.getSignatureStatus(signature, {
       searchTransactionHistory: true,
     });
 
-    const confirmationStatus = status?.value?.confirmationStatus;
-    if (confirmationStatus === "confirmed" || confirmationStatus === "finalized") {
-      if (status?.value?.err) {
-        throw new Error(`Transaction rejected on-chain: ${JSON.stringify(status.value.err)}`);
+    if (value !== null) {
+      // Transaction found — check for on-chain errors
+      if (value.err) {
+        throw new Error(
+          `Jupiter transaction rejected on-chain: ${JSON.stringify(value.err)}`
+        );
       }
-      return; // success!
+      // Accepted statuses
+      if (
+        value.confirmationStatus === "confirmed" ||
+        value.confirmationStatus === "finalized"
+      ) {
+        return; // ✓ success
+      }
     }
 
-    // Wait 2 seconds before polling again
-    await new Promise((r) => setTimeout(r, 2000));
+    // Not yet confirmed — wait before next poll (skip wait on last attempt)
+    if (attempt < MAX_ATTEMPTS - 1) {
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+    }
   }
+
+  throw new Error(
+    `Jupiter swap transaction was not confirmed after 3 minutes.\n` +
+      `Check signature on Solscan: ${signature}`
+  );
 }
 
 export function useJupiterSwap() {
@@ -76,7 +75,7 @@ export function useJupiterSwap() {
       publicKey.toString()
     );
 
-    // Decode base64 to Uint8Array without relying on Buffer polyfill
+    // Decode base64 → Uint8Array (no Buffer polyfill needed)
     const binaryStr = atob(swapTxBase64);
     const bytes = new Uint8Array(binaryStr.length);
     for (let i = 0; i < binaryStr.length; i++) {
@@ -85,17 +84,14 @@ export function useJupiterSwap() {
 
     const tx = VersionedTransaction.deserialize(bytes);
 
-    // Get a fresh blockhash BEFORE sending — used to track expiry for confirmation.
-    // We use "finalized" so lastValidBlockHeight is conservative (~150 blocks ≈ 1 min).
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
-
+    // Send with automatic retry on transient RPC drops
     const signature = await sendTransaction(tx, connection, {
       skipPreflight: false,
       maxRetries: 3,
     });
 
-    // Use polling-based confirmation instead of the legacy 30-second-timeout API
-    await waitForConfirmation(connection, signature, blockhash, lastValidBlockHeight);
+    // Poll until confirmed (up to 3 min) — avoids the 30-second timeout of the legacy API
+    await pollForConfirmation(connection, signature);
 
     return { signature, outputAmount: quote.amountOutHuman };
   }
