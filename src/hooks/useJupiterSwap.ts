@@ -9,6 +9,55 @@ function getMintAndDecimals(outputTokenKey: OutputTokenKey): { mint: string; dec
   return { mint: TSLAX_MINT, decimals: TSLAX_DECIMALS };
 }
 
+/**
+ * Poll getSignatureStatus until confirmed/finalized or the blockhash expires.
+ * This avoids the hardcoded 30-second timeout of the legacy confirmTransaction(sig, commitment) API.
+ */
+async function waitForConfirmation(
+  connection: import("@solana/web3.js").Connection,
+  signature: string,
+  blockhash: string,
+  lastValidBlockHeight: number
+): Promise<void> {
+  while (true) {
+    // Check if the blockhash has expired (transaction can no longer land)
+    const currentHeight = await connection.getBlockHeight("confirmed");
+    if (currentHeight > lastValidBlockHeight) {
+      // One last check — maybe it landed in the final blocks
+      const status = await connection.getSignatureStatus(signature);
+      if (
+        status?.value?.confirmationStatus === "confirmed" ||
+        status?.value?.confirmationStatus === "finalized"
+      ) {
+        if (status.value.err) {
+          throw new Error(`Transaction rejected on-chain: ${JSON.stringify(status.value.err)}`);
+        }
+        return; // confirmed!
+      }
+      throw new Error(
+        `Transaction expired (blockhash no longer valid). ` +
+        `Check signature ${signature} on Solscan to see if it landed.`
+      );
+    }
+
+    // Poll signature status
+    const status = await connection.getSignatureStatus(signature, {
+      searchTransactionHistory: true,
+    });
+
+    const confirmationStatus = status?.value?.confirmationStatus;
+    if (confirmationStatus === "confirmed" || confirmationStatus === "finalized") {
+      if (status?.value?.err) {
+        throw new Error(`Transaction rejected on-chain: ${JSON.stringify(status.value.err)}`);
+      }
+      return; // success!
+    }
+
+    // Wait 2 seconds before polling again
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+}
+
 export function useJupiterSwap() {
   const { publicKey, sendTransaction } = useWallet();
   const { connection } = useConnection();
@@ -35,8 +84,18 @@ export function useJupiterSwap() {
     }
 
     const tx = VersionedTransaction.deserialize(bytes);
-    const signature = await sendTransaction(tx, connection);
-    await connection.confirmTransaction(signature, "confirmed");
+
+    // Get a fresh blockhash BEFORE sending — used to track expiry for confirmation.
+    // We use "finalized" so lastValidBlockHeight is conservative (~150 blocks ≈ 1 min).
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
+
+    const signature = await sendTransaction(tx, connection, {
+      skipPreflight: false,
+      maxRetries: 3,
+    });
+
+    // Use polling-based confirmation instead of the legacy 30-second-timeout API
+    await waitForConfirmation(connection, signature, blockhash, lastValidBlockHeight);
 
     return { signature, outputAmount: quote.amountOutHuman };
   }
