@@ -4,7 +4,7 @@ import { useHistoryStore } from "@/store/historyStore";
 import { useGardenBridge } from "./useGardenBridge";
 import { useOrderPoller } from "./useOrderPoller";
 import { useDexSwap } from "./useDexSwap";
-import { useJupiterSwap } from "./useJupiterSwap";
+import { useLiFiSwap } from "./useLiFiSwap";
 import { useBitcoinWalletStore } from "@/store/bitcoinWalletStore";
 import type { InputTokenSymbol } from "@/config/tokens";
 
@@ -26,7 +26,7 @@ export function useSwapOrchestrator() {
   const { initiateSwap } = useGardenBridge(inputToken as InputTokenSymbol, outputToken);
   const { pollUntilBridgeComplete } = useOrderPoller();
   const { executeXautSwap } = useDexSwap();
-  const { executeJupiterSwap } = useJupiterSwap();
+  const { executeLiFiSwap } = useLiFiSwap();
 
   const isSolana = outputToken === "TSLAX" || outputToken === "USDG";
 
@@ -95,7 +95,7 @@ export function useSwapOrchestrator() {
         const usdcHuman = (Number(rawStr) / 1e6).toFixed(2);
 
         try {
-          const { signature, outputAmount } = await executeJupiterSwap(usdcRaw, outputToken);
+          const { signature, outputAmount } = await executeLiFiSwap(usdcRaw, outputToken);
           setSession({ status: "complete", solanaSignature: signature, xautReceived: outputAmount });
           const s = useSwapStore.getState().session;
           addRecord({
@@ -113,13 +113,13 @@ export function useSwapOrchestrator() {
             errorMessage: null,
           });
         } catch (jupErr: unknown) {
-          // Bridge succeeded but Jupiter swap failed.
+          // Bridge succeeded but LiFi swap failed.
           // The user's USDC is safely in their Solana wallet — inform them clearly.
-          const jupMsg = jupErr instanceof Error ? jupErr.message : "Jupiter swap failed";
+          const jupMsg = jupErr instanceof Error ? jupErr.message : "LiFi swap failed";
           const errMsg =
             `Bridge succeeded ✓ — ${usdcHuman} USDC is safe in your Solana wallet.\n` +
-            `Jupiter swap failed: ${jupMsg}\n` +
-            `Swap manually at jup.ag using your Solana wallet.`;
+            `LiFi swap failed: ${jupMsg}\n` +
+            `Swap manually at app.li.fi using your Solana wallet.`;
 
           setSession({
             status: "bridge_jupiter_failed",
@@ -140,7 +140,7 @@ export function useSwapOrchestrator() {
             dexTxHash: null,
             gardenOrderId: s.gardenOrderId,
             status: "failed",
-            errorMessage: `Bridge OK — ${usdcHuman} USDC in Solana wallet. Jupiter failed: ${jupMsg}`,
+            errorMessage: `Bridge OK — ${usdcHuman} USDC in Solana wallet. LiFi failed: ${jupMsg}`,
           });
         }
       } else {

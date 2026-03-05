@@ -17,7 +17,7 @@ interface Props {
 }
 
 export function SwapStatusModal({ open, session, onClose, onReset }: Props) {
-  const { outputToken } = useSwapStore();
+  const { outputToken, setSession } = useSwapStore();
   const { status, errorMessage, xautReceived, usdcInWallet } = session;
 
   const isDone = status === "complete";
@@ -46,7 +46,10 @@ export function SwapStatusModal({ open, session, onClose, onReset }: Props) {
         <StepIndicator status={status} />
 
         <div className="space-y-3">
-          <BridgeStatusCard session={session} />
+          <BridgeStatusCard
+            session={session}
+            onBtcSent={(txid) => setSession({ btcSentTxId: txid })}
+          />
           <DexSwapStatusCard session={session} />
         </div>
 
@@ -85,7 +88,7 @@ export function SwapStatusModal({ open, session, onClose, onReset }: Props) {
           </div>
         )}
 
-        {/* ── Bridge succeeded but Jupiter failed — USDC is safe ── */}
+        {/* ── Bridge succeeded but LiFi swap failed — USDC is safe ── */}
         {isJupiterFailed && (
           <div style={{
             borderRadius: 16,
@@ -119,11 +122,11 @@ export function SwapStatusModal({ open, session, onClose, onReset }: Props) {
             )}
 
             <p style={{ fontSize: 12, color: "#78350f", margin: "0 0 10px" }}>
-              The bridge completed successfully. The Jupiter swap failed — your USDC is waiting in your Solana wallet.
+              The bridge completed successfully. The LiFi swap failed — your USDC is waiting in your Solana wallet.
             </p>
 
             <a
-              href={`https://jup.ag/swap/USDC-${tokenConfig.symbol}`}
+              href={`https://app.li.fi/swap?fromChain=SOL&fromToken=USDC&toChain=SOL&toToken=${tokenConfig.symbol}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -141,7 +144,7 @@ export function SwapStatusModal({ open, session, onClose, onReset }: Props) {
                 textDecoration: "none",
               }}
             >
-              Swap on Jupiter ↗
+              Swap on LiFi ↗
             </a>
 
             {errorMessage && (

@@ -68,7 +68,7 @@ export function DexSwapStatusCard({ session }: Props) {
 
       {status === "bridge_complete" && (
         <p style={{ fontSize: 12, color: "#4a4568", margin: 0 }}>
-          {isSolana ? "USDC received. Preparing Jupiter swap…" : "WBTC received. Preparing DEX swap…"}
+          {isSolana ? "USDC received. Preparing LiFi swap…" : "WBTC received. Preparing DEX swap…"}
         </p>
       )}
 
@@ -83,7 +83,7 @@ export function DexSwapStatusCard({ session }: Props) {
         <div>
           <p style={{ fontSize: 12, color: "#4a4568", margin: "0 0 4px" }}>
             {isSolana
-              ? `Swapping USDC → ${tokenConfig.symbol} on Solana…`
+              ? `Swapping USDC → ${tokenConfig.symbol} via LiFi…`
               : `Swapping WBTC → ${tokenConfig.symbol} on Arbitrum…`
             }
           </p>
@@ -93,7 +93,7 @@ export function DexSwapStatusCard({ session }: Props) {
 
       {isError && (
         <p style={{ fontSize: 12, color: "#dc2626", margin: 0 }}>
-          Jupiter swap failed — see the panel above to recover your USDC.
+          LiFi swap failed — see the panel above to recover your USDC.
         </p>
       )}
 
@@ -107,7 +107,7 @@ export function DexSwapStatusCard({ session }: Props) {
           )}
           {isSolana && solanaSignature && (
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 12, color: "#8b88a0" }}>Jupiter tx:</span>
+              <span style={{ fontSize: 12, color: "#8b88a0" }}>LiFi tx:</span>
               <a
                 href={`https://solscan.io/tx/${solanaSignature}`}
                 target="_blank"
