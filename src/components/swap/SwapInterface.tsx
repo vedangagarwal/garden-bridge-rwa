@@ -45,9 +45,10 @@ export function SwapInterface() {
   const tokenConfig = OUTPUT_TOKENS[outputToken];
   const isSolana = tokenConfig.network === "solana";
 
-  // Open modal when swap starts
+  // Open modal when swap starts; keep closed for terminal states
   useEffect(() => {
-    if (session.status !== "idle" && session.status !== "complete" && session.status !== "failed") {
+    const terminalStates = ["idle", "complete", "failed", "bridge_jupiter_failed"];
+    if (!terminalStates.includes(session.status)) {
       setModalOpen(true);
     }
   }, [session.status]);
@@ -130,7 +131,11 @@ export function SwapInterface() {
         open={modalOpen}
         session={session}
         onClose={() => {
-          if (session.status === "complete" || session.status === "failed") setModalOpen(false);
+          if (
+            session.status === "complete" ||
+            session.status === "failed" ||
+            session.status === "bridge_jupiter_failed"
+          ) setModalOpen(false);
         }}
         onReset={handleReset}
       />
