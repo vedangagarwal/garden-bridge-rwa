@@ -138,19 +138,8 @@ export function useLiFiSwap() {
       }
     })();
 
-    // Pre-simulate with replaceRecentBlockhash so we catch errors (e.g. TSLAx
-    // transfer-hook whitelist rejection) before wasting on-chain gas / USDC.
-    const sim = await connection.simulateTransaction(tx, {
-      replaceRecentBlockhash: true,
-      sigVerify: false,
-    });
-    if (sim.value.err) {
-      const errStr = JSON.stringify(sim.value.err);
-      throw new Error(interpretSolanaError(errStr, outputTokenKey));
-    }
-
     const signature = await sendTransaction(tx, connection, {
-      skipPreflight: true, // already simulated above
+      skipPreflight: true,
       maxRetries: 3,
     });
 

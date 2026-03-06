@@ -16,7 +16,7 @@ import type { OutputTokenKey } from "@/config/tokens";
 const TOKEN_DISCLAIMERS: Record<OutputTokenKey, string> = {
   XAUT: "XAUt0 is Tether Gold bridged to Arbitrum via LayerZero OFT. Verify contract addresses before transacting.",
   PAXG: "PAXG is PAX Gold on Arbitrum. Verify contract addresses before transacting.",
-  TSLAX: "TSLAx is a tokenized Tesla equity (Backed Finance). ⚠️ Your Solana wallet must be KYC-verified at backed.fi to receive TSLAx — swaps will fail for unverified wallets.",
+  TSLAX: "TSLAx is a tokenized Tesla equity on Solana. Verify contract addresses before transacting.",
   USDG: "USDG is Global Dollar by Paxos — a regulated USD stablecoin on Solana. Verify contract addresses before transacting.",
 };
 
