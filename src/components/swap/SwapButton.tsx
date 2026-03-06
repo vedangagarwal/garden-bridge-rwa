@@ -12,20 +12,23 @@ interface Props {
 
 const LOADING_LABELS: Record<string, string> = {
   quoting: "Fetching quote…",
+  initiating: "Creating order…",
   awaiting_deposit: "Waiting for deposit…",
   confirming: "Confirming on Bitcoin…",
-  bridging: "Bridging to Arbitrum…",
+  bridging: "Bridging…",
   bridge_complete: "Bridge complete…",
-  approving: "Approving USDC…",
-  swapping: "Swapping to XAUt0…",
+  approving: "Approving…",
+  swapping: "Swapping…",
 };
+
+const TERMINAL_STATUSES = new Set(["idle", "complete", "failed", "bridge_lifi_failed"]);
 
 export function SwapButton({ onSwap, loading }: Props) {
   const { isConnected } = useAccount();
   const { inputAmount, quote, session } = useSwapStore();
   const { status } = session;
 
-  const isActive = status !== "idle" && status !== "complete" && status !== "failed";
+  const isActive = !TERMINAL_STATUSES.has(status);
   const activeLabel = LOADING_LABELS[status];
 
   if (!isConnected) {

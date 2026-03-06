@@ -53,6 +53,14 @@ export function SwapInterface() {
     }
   }, [session.status]);
 
+  // Once the orchestrator moves past "idle", the modal owns the progress UI —
+  // clear the local button-spinner so the button stops flashing the loading state.
+  useEffect(() => {
+    if (session.status !== "idle" && swapping) {
+      setSwapping(false);
+    }
+  }, [session.status, swapping]);
+
   async function handleSwap() {
     setSwapping(true);
     setModalOpen(true);

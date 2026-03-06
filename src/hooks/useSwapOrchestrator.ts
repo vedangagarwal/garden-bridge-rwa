@@ -50,13 +50,23 @@ export function useSwapOrchestrator() {
         btcSentTxId: null,
       });
 
-      const swapResult = await initiateSwap({
-        sendAmount: amountSats.toString(),
-        receiveAmount: quote.gardenReceiveAmount,
-        solverId: quote.solverId,
-        userAddress: address,
-        btcRefundAddress: btcAddress ?? undefined,
-      });
+      // Race the Garden SDK call against a 30-second timeout so the UI
+      // never hangs indefinitely if the API is slow or unresponsive.
+      const swapResult = await Promise.race([
+        initiateSwap({
+          sendAmount: amountSats.toString(),
+          receiveAmount: quote.gardenReceiveAmount,
+          solverId: quote.solverId,
+          userAddress: address,
+          btcRefundAddress: btcAddress ?? undefined,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Swap initiation timed out — please try again.")),
+            30_000
+          )
+        ),
+      ]);
 
       // For BTC swaps, result has `to` (deposit address)
       const orderResponse = swapResult as { order_id?: string; to?: string } & { order_id: string };
