@@ -4,6 +4,26 @@ import { fetchLiFiQuote } from "@/lib/dex/lifi";
 import { TSLAX_MINT, TSLAX_DECIMALS, USDG_MINT, USDG_DECIMALS } from "@/lib/solana/config";
 import type { OutputTokenKey } from "@/config/tokens";
 
+/**
+ * Convert raw Solana instruction errors into user-readable messages.
+ *
+ * TSLAx (and other Backed Finance xStocks) use a Token-2022 transfer hook
+ * that validates every transfer against a KYC whitelist.
+ * Instruction error Custom:1 = wallet not whitelisted → clear user message.
+ */
+function interpretSolanaError(errStr: string, outputTokenKey: OutputTokenKey): string {
+  const isCustom1 = errStr.includes('"Custom":1') || errStr.includes("Custom:1");
+  if (isCustom1 && outputTokenKey === "TSLAX") {
+    return (
+      "TSLAx transfer blocked: your Solana wallet must be KYC-verified by " +
+      "Backed Finance before it can receive TSLAx. " +
+      "Complete verification at backed.fi, then retry. " +
+      "Your USDC remains safe in your wallet."
+    );
+  }
+  return `LiFi transaction rejected on-chain: ${errStr}`;
+}
+
 function getMintAndDecimals(outputTokenKey: OutputTokenKey): { mint: string; decimals: number } {
   if (outputTokenKey === "USDG") return { mint: USDG_MINT, decimals: USDG_DECIMALS };
   return { mint: TSLAX_MINT, decimals: TSLAX_DECIMALS };
@@ -18,7 +38,8 @@ function getMintAndDecimals(outputTokenKey: OutputTokenKey): { mint: string; dec
  */
 async function pollForConfirmation(
   connection: import("@solana/web3.js").Connection,
-  signature: string
+  signature: string,
+  outputTokenKey: OutputTokenKey
 ): Promise<void> {
   const POLL_INTERVAL_MS = 2_000;
   const MAX_ATTEMPTS = 90; // 90 × 2 s = 3 minutes
@@ -32,9 +53,7 @@ async function pollForConfirmation(
 
       if (value !== null) {
         if (value.err) {
-          throw new Error(
-            `LiFi transaction rejected on-chain: ${JSON.stringify(value.err)}`
-          );
+          throw new Error(interpretSolanaError(JSON.stringify(value.err), outputTokenKey));
         }
         if (
           value.confirmationStatus === "confirmed" ||
@@ -47,8 +66,13 @@ async function pollForConfirmation(
       // null = not yet visible — keep polling
     } catch (rpcErr: unknown) {
       const msg = rpcErr instanceof Error ? rpcErr.message : String(rpcErr);
-      if (msg.startsWith("LiFi transaction rejected on-chain:")) {
-        throw rpcErr; // real on-chain failure — surface immediately
+      // Real on-chain failures (from interpretSolanaError) must surface immediately,
+      // not be swallowed into the transient-RPC-error retry loop.
+      if (
+        msg.startsWith("LiFi transaction rejected on-chain:") ||
+        msg.startsWith("TSLAx transfer blocked:")
+      ) {
+        throw rpcErr;
       }
       consecutiveErrors++;
       console.warn(
@@ -114,14 +138,23 @@ export function useLiFiSwap() {
       }
     })();
 
-    // skipPreflight: LiFi already simulates the tx; avoids redundant public-RPC
-    // preflight that can 403 or add latency.
+    // Pre-simulate with replaceRecentBlockhash so we catch errors (e.g. TSLAx
+    // transfer-hook whitelist rejection) before wasting on-chain gas / USDC.
+    const sim = await connection.simulateTransaction(tx, {
+      replaceRecentBlockhash: true,
+      sigVerify: false,
+    });
+    if (sim.value.err) {
+      const errStr = JSON.stringify(sim.value.err);
+      throw new Error(interpretSolanaError(errStr, outputTokenKey));
+    }
+
     const signature = await sendTransaction(tx, connection, {
-      skipPreflight: true,
+      skipPreflight: true, // already simulated above
       maxRetries: 3,
     });
 
-    await pollForConfirmation(connection, signature);
+    await pollForConfirmation(connection, signature, outputTokenKey);
 
     return { signature, outputAmount: amountOutHuman };
   }
