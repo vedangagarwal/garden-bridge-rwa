@@ -62,6 +62,7 @@ export function useSwapQuote() {
           toAsset,
           amount: amountSats,
           isExactOut: false,
+          options: { affiliateFee: 30 },
         });
 
         if (!gardenResult || gardenResult.error) {
