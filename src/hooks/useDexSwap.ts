@@ -79,7 +79,7 @@ export function useDexSwap() {
 
       params.onSwapping();
 
-      const amountOutMin = (wbtcBigInt * BigInt(Math.floor((1 - params.slippage / 100) * 1000))) / BigInt(1000);
+      const amountOutMin = BigInt(0);
       const calldata = buildUniswapSwapCalldata({
         amountIn: wbtcBigInt,
         amountOutMinimum: amountOutMin,
