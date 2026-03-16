@@ -1,8 +1,9 @@
 import axios from "axios";
 import { TOKENS } from "@/config/tokens";
-import { CONTRACTS } from "@/config/contracts";
 
-const ONE_INCH_BASE = "https://api.1inch.dev/swap/v6.0/42161";
+// Route through the server-side proxy to avoid CORS failures when calling
+// api.1inch.dev directly from the browser.
+const ONE_INCH_PROXY = "/api/1inch";
 
 export interface OneInchQuoteResult {
   toAmount: string;
@@ -20,23 +21,18 @@ export interface OneInchSwapResult {
   toAmount: string;
 }
 
-function getHeaders() {
-  const apiKey = process.env.NEXT_PUBLIC_ONE_INCH_API_KEY;
-  return apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
-}
-
 export async function getOneInchQuote(
   wbtcAmount: string,
   outputAddress: `0x${string}` = TOKENS.XAUT.address
 ): Promise<OneInchQuoteResult> {
-  const res = await axios.get(`${ONE_INCH_BASE}/quote`, {
+  const res = await axios.get(ONE_INCH_PROXY, {
     params: {
+      endpoint: "quote",
       src: TOKENS.WBTC.address,
       dst: outputAddress,
       amount: wbtcAmount,
       includeGas: true,
     },
-    headers: getHeaders(),
   });
   // 1inch v6.0 uses dstAmount (not toAmount)
   return {
@@ -53,8 +49,9 @@ export async function getOneInchSwapCalldata(params: {
   outputAddress?: `0x${string}`;
 }): Promise<OneInchSwapResult> {
   const dst = params.outputAddress ?? TOKENS.XAUT.address;
-  const res = await axios.get(`${ONE_INCH_BASE}/swap`, {
+  const res = await axios.get(ONE_INCH_PROXY, {
     params: {
+      endpoint: "swap",
       src: TOKENS.WBTC.address,
       dst,
       amount: params.wbtcAmount,
@@ -64,7 +61,6 @@ export async function getOneInchSwapCalldata(params: {
       allowPartialFill: false,
       receiver: params.fromAddress,
     },
-    headers: getHeaders(),
   });
   return {
     tx: {
