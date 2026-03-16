@@ -8,7 +8,7 @@ import { ChainAsset } from "@gardenfi/orderbook";
 const AFFILIATE_FEE = [
   {
     address: "0xC704a656Fc9A54C049B4D8FAFcb4e4c6033B7beA",
-    asset: ChainAsset.fromString("arbitrum:usdc"),
+    asset: ChainAsset.fromString("ethereum:usdc"),
     fee: 30,
   },
 ];
