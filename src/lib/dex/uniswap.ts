@@ -61,6 +61,7 @@ export function buildUniswapSwapCalldata(params: {
   amountOutMinimum: bigint;
   recipient: `0x${string}`;
   tokenOut?: `0x${string}`;
+  fee?: number;
 }): `0x${string}` {
   return encodeFunctionData({
     abi: SWAP_ROUTER_ABI,
@@ -69,7 +70,7 @@ export function buildUniswapSwapCalldata(params: {
       {
         tokenIn: TOKENS.WBTC.address,
         tokenOut: params.tokenOut ?? TOKENS.XAUT.address,
-        fee: UNISWAP_FEE_TIER,
+        fee: params.fee ?? UNISWAP_FEE_TIER,
         recipient: params.recipient,
         amountIn: params.amountIn,
         amountOutMinimum: params.amountOutMinimum,

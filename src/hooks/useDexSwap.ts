@@ -10,6 +10,23 @@ import type { OutputTokenKey } from "@/config/tokens";
 const TRANSFER_EVENT_TOPIC =
   "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 
+// Uniswap V3 Factory on Arbitrum — used to find which fee tier has a pool
+const UNISWAP_FACTORY = "0x1F98431c8aD98523631AE4a59f267346ea31F984" as const;
+const FACTORY_ABI = [
+  {
+    name: "getPool",
+    type: "function",
+    stateMutability: "view",
+    inputs: [
+      { name: "tokenA", type: "address" },
+      { name: "tokenB", type: "address" },
+      { name: "fee", type: "uint24" },
+    ],
+    outputs: [{ name: "pool", type: "address" }],
+  },
+] as const;
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
 export function useDexSwap() {
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
@@ -69,7 +86,28 @@ export function useDexSwap() {
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
       outputReceived = parseOutputFromLogs(receipt.logs, params.userAddress, outputAddress, outputDecimals);
     } catch {
-      // Fallback to Uniswap V3
+      // Fallback to Uniswap V3 — probe the factory to find a fee tier with a real pool
+      const feeTiers = [500, 3000, 10000] as const;
+      let workingFee: number | null = null;
+      for (const fee of feeTiers) {
+        const pool = await publicClient.readContract({
+          address: UNISWAP_FACTORY,
+          abi: FACTORY_ABI,
+          functionName: "getPool",
+          args: [TOKENS.WBTC.address, outputAddress, fee],
+        });
+        if (pool !== ZERO_ADDRESS) {
+          workingFee = fee;
+          break;
+        }
+      }
+      if (workingFee === null) {
+        throw new Error(
+          `No Uniswap V3 pool found for WBTC → ${tokenKey} on Arbitrum. ` +
+          `Ensure NEXT_PUBLIC_ONE_INCH_API_KEY is set in Vercel env vars.`
+        );
+      }
+
       await ensureApproval(
         TOKENS.WBTC.address,
         CONTRACTS.UNISWAP_SWAP_ROUTER_02,
@@ -79,12 +117,12 @@ export function useDexSwap() {
 
       params.onSwapping();
 
-      const amountOutMin = BigInt(0);
       const calldata = buildUniswapSwapCalldata({
         amountIn: wbtcBigInt,
-        amountOutMinimum: amountOutMin,
+        amountOutMinimum: BigInt(0),
         recipient: params.userAddress,
         tokenOut: outputAddress,
+        fee: workingFee,
       });
 
       txHash = await walletClient.sendTransaction({
