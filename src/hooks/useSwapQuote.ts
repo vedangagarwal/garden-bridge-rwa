@@ -1,8 +1,7 @@
 import { useCallback, useState } from "react";
 import { useGarden } from "@gardenfi/react-hooks";
 import { GARDEN_ASSETS } from "@/lib/garden/assets";
-import { getOneInchQuote } from "@/lib/dex/oneInch";
-import { fetchLiFiQuote } from "@/lib/dex/lifi";
+import { fetchLiFiQuote, fetchLiFiEvmQuote } from "@/lib/dex/lifi";
 import { OUTPUT_TOKENS } from "@/config/tokens";
 import { TSLAX_MINT, TSLAX_DECIMALS, USDG_MINT, USDG_DECIMALS } from "@/lib/solana/config";
 import type { CombinedQuote } from "@/types/swap";
@@ -14,13 +13,9 @@ const MIN_AMOUNT_BTC = 0.0001;
 /** Solana output tokens — preview AND actual swap both use LiFi */
 const SOLANA_TOKENS = new Set<OutputTokenKey>(["TSLAX", "USDG"]);
 
-/**
- * Throwaway address used when fetching a LiFi preview quote.
- * LiFi needs fromAddress to build the tx, but for display purposes any
- * valid base58 Solana address is fine. The real address is used when
- * executeLiFiSwap() is called during the actual swap.
- */
-const LIFI_QUOTE_DUMMY_ADDRESS = "11111111111111111111111111111111";
+/** Dummy addresses for preview quotes — real addresses used at swap time */
+const LIFI_QUOTE_DUMMY_SOL = "11111111111111111111111111111111";
+const LIFI_QUOTE_DUMMY_EVM = "0x0000000000000000000000000000000000000001" as const;
 
 function getSolanaMintAndDecimals(outputToken: OutputTokenKey): { mint: string; decimals: number } {
   if (outputToken === "USDG") return { mint: USDG_MINT, decimals: USDG_DECIMALS };
@@ -85,7 +80,7 @@ export function useSwapQuote() {
             usdcBigInt,
             mint,
             decimals,
-            LIFI_QUOTE_DUMMY_ADDRESS
+            LIFI_QUOTE_DUMMY_SOL
           );
           // rawQuote.estimate.toAmount is the raw output in smallest token units
           xautAmount = lifiResult.rawQuote.estimate?.toAmount ?? "0";
@@ -95,28 +90,22 @@ export function useSwapQuote() {
           const btcFloat = parseFloat(amount);
           pricePerBtc = btcFloat > 0 ? (outFloat / btcFloat).toFixed(6) : "0";
         } else {
-          // 1inch: WBTC → XAUt0 or PAXG
+          // LiFi EVM: WBTC → XAUt0 or PAXG on Arbitrum
           const outputConfig = OUTPUT_TOKENS[outputToken as "XAUT" | "PAXG"];
           const outputAddress = outputConfig.address;
           const outputDecimals = outputConfig.decimals;
+          const wbtcBigInt = BigInt(Math.round(parseFloat(intermediateAmount)));
 
-          const dexResult = await getOneInchQuote(
-            intermediateAmount,
-            outputAddress
-          ).catch(() => {
-            const wbtcFloat = parseFloat(intermediateAmount) / 1e8;
-            return {
-              toAmount: Math.floor(
-                wbtcFloat * 30 * 10 ** outputDecimals
-              ).toString(),
-              estimatedGas: 200000,
-              priceImpact: "0",
-            };
-          });
+          const lifiResult = await fetchLiFiEvmQuote(
+            wbtcBigInt,
+            outputAddress,
+            outputDecimals,
+            LIFI_QUOTE_DUMMY_EVM
+          );
 
-          xautAmount = dexResult.toAmount;
-          priceImpact = dexResult.priceImpact;
-          const outFloat = parseFloat(dexResult.toAmount) / 10 ** outputDecimals;
+          xautAmount = lifiResult.rawQuote.estimate?.toAmount ?? "0";
+          dexQuote = lifiResult.rawQuote;
+          const outFloat = parseFloat(lifiResult.amountOutHuman);
           const btcFloat = parseFloat(amount);
           pricePerBtc = btcFloat > 0 ? (outFloat / btcFloat).toFixed(6) : "0";
         }
@@ -125,7 +114,7 @@ export function useSwapQuote() {
           gardenReceiveAmount: intermediateAmount,
           xautAmount,
           gardenFee: best.fee,
-          dexFee: isSolana ? "0.35" : "0.875",  // LiFi typical fee ~0.35% on Solana
+          dexFee: "0.35",  // LiFi typical fee ~0.35%
           estimatedTimeSeconds: best.estimated_time + 30,
           solverId: best.solver_id,
           pricePerBtc,

@@ -1,31 +1,12 @@
 import { useWalletClient, usePublicClient } from "wagmi";
 import { parseUnits } from "viem";
-import { getOneInchSwapCalldata } from "@/lib/dex/oneInch";
-import { buildUniswapSwapCalldata, UNISWAP_FEE_TIER } from "@/lib/dex/uniswap";
+import { fetchLiFiEvmQuote } from "@/lib/dex/lifi";
 import { useTokenApproval } from "./useTokenApproval";
 import { TOKENS, OUTPUT_TOKENS } from "@/config/tokens";
-import { CONTRACTS } from "@/config/contracts";
 import type { OutputTokenKey } from "@/config/tokens";
 
 const TRANSFER_EVENT_TOPIC =
   "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-
-// Uniswap V3 Factory on Arbitrum — used to find which fee tier has a pool
-const UNISWAP_FACTORY = "0x1F98431c8aD98523631AE4a59f267346ea31F984" as const;
-const FACTORY_ABI = [
-  {
-    name: "getPool",
-    type: "function",
-    stateMutability: "view",
-    inputs: [
-      { name: "tokenA", type: "address" },
-      { name: "tokenB", type: "address" },
-      { name: "fee", type: "uint24" },
-    ],
-    outputs: [{ name: "pool", type: "address" }],
-  },
-] as const;
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export function useDexSwap() {
   const { data: walletClient } = useWalletClient();
@@ -45,7 +26,6 @@ export function useDexSwap() {
 
     const tokenKey = params.outputTokenKey ?? "XAUT";
     const outputTokenConfig = OUTPUT_TOKENS[tokenKey];
-    // Only Arbitrum tokens are valid here
     if (outputTokenConfig.network !== "arbitrum") {
       throw new Error("executeDexSwap called with non-Arbitrum token");
     }
@@ -53,89 +33,46 @@ export function useDexSwap() {
     const outputDecimals = outputTokenConfig.decimals;
 
     const wbtcBigInt = parseUnits(params.wbtcAmount, 8);
+    const lifiSlippage = (params.slippage / 100).toFixed(4);
 
     params.onApproving();
 
-    let txHash: `0x${string}`;
-    let outputReceived = "0";
+    // Get LiFi EVM quote: WBTC → output token on Arbitrum
+    const { rawQuote, amountOutHuman } = await fetchLiFiEvmQuote(
+      wbtcBigInt,
+      outputAddress,
+      outputDecimals,
+      params.userAddress,
+      lifiSlippage
+    );
 
-    try {
-      // Try 1inch first
-      await ensureApproval(
-        TOKENS.WBTC.address,
-        CONTRACTS.ONE_INCH_ROUTER,
-        wbtcBigInt,
-        params.userAddress
-      );
+    const txReq = rawQuote.transactionRequest!;
 
-      params.onSwapping();
+    // Approve WBTC to LiFi's router contract
+    await ensureApproval(
+      TOKENS.WBTC.address,
+      txReq.to as `0x${string}`,
+      wbtcBigInt,
+      params.userAddress
+    );
 
-      const swapData = await getOneInchSwapCalldata({
-        wbtcAmount: wbtcBigInt.toString(),
-        fromAddress: params.userAddress,
-        slippage: params.slippage,
-        outputAddress,
-      });
+    params.onSwapping();
 
-      txHash = await walletClient.sendTransaction({
-        to: swapData.tx.to,
-        data: swapData.tx.data,
-        value: BigInt(swapData.tx.value ?? 0),
-      });
+    const txHash = await walletClient.sendTransaction({
+      to: txReq.to as `0x${string}`,
+      data: txReq.data as `0x${string}`,
+      value: BigInt(txReq.value ?? "0"),
+    });
 
-      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
-      outputReceived = parseOutputFromLogs(receipt.logs, params.userAddress, outputAddress, outputDecimals);
-    } catch {
-      // Fallback to Uniswap V3 — probe the factory to find a fee tier with a real pool
-      const feeTiers = [500, 3000, 10000] as const;
-      let workingFee: number | null = null;
-      for (const fee of feeTiers) {
-        const pool = await publicClient.readContract({
-          address: UNISWAP_FACTORY,
-          abi: FACTORY_ABI,
-          functionName: "getPool",
-          args: [TOKENS.WBTC.address, outputAddress, fee],
-        });
-        if (pool !== ZERO_ADDRESS) {
-          workingFee = fee;
-          break;
-        }
-      }
-      if (workingFee === null) {
-        throw new Error(
-          `No Uniswap V3 pool found for WBTC → ${tokenKey} on Arbitrum. ` +
-          `Ensure NEXT_PUBLIC_ONE_INCH_API_KEY is set in Vercel env vars.`
-        );
-      }
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const outputReceived = parseOutputFromLogs(
+      receipt.logs,
+      params.userAddress,
+      outputAddress,
+      outputDecimals
+    );
 
-      await ensureApproval(
-        TOKENS.WBTC.address,
-        CONTRACTS.UNISWAP_SWAP_ROUTER_02,
-        wbtcBigInt,
-        params.userAddress
-      );
-
-      params.onSwapping();
-
-      const calldata = buildUniswapSwapCalldata({
-        amountIn: wbtcBigInt,
-        amountOutMinimum: BigInt(0),
-        recipient: params.userAddress,
-        tokenOut: outputAddress,
-        fee: workingFee,
-      });
-
-      txHash = await walletClient.sendTransaction({
-        to: CONTRACTS.UNISWAP_SWAP_ROUTER_02,
-        data: calldata,
-        value: BigInt(0),
-      });
-
-      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
-      outputReceived = parseOutputFromLogs(receipt.logs, params.userAddress, outputAddress, outputDecimals);
-    }
-
-    params.onComplete(txHash!, outputReceived);
+    params.onComplete(txHash, outputReceived || amountOutHuman);
   }
 
   return { executeXautSwap };
