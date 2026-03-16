@@ -3,15 +3,6 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { GARDEN_ASSETS } from "@/lib/garden/assets";
 import type { InputTokenSymbol, OutputTokenKey } from "@/config/tokens";
 import type { QuoteResponse } from "@gardenfi/core";
-import { ChainAsset } from "@gardenfi/orderbook";
-
-const AFFILIATE_FEE = [
-  {
-    address: "0xC704a656Fc9A54C049B4D8FAFcb4e4c6033B7beA",
-    asset: ChainAsset.fromString("ethereum:usdc"),
-    fee: 30,
-  },
-];
 
 export function useGardenBridge(inputToken: InputTokenSymbol, outputToken: OutputTokenKey = "XAUT") {
   const { swap, getQuote } = useGarden();
@@ -23,7 +14,7 @@ export function useGardenBridge(inputToken: InputTokenSymbol, outputToken: Outpu
 
   async function fetchGardenQuote(amountSats: number): Promise<QuoteResponse[]> {
     if (!getQuote) throw new Error("Garden not initialized");
-    const result = await getQuote({ fromAsset, toAsset, amount: amountSats, isExactOut: false, options: { affiliateFee: 30 } });
+    const result = await getQuote({ fromAsset, toAsset, amount: amountSats, isExactOut: false });
     if (!result || result.error) throw new Error(result?.error ?? "Quote failed");
     return result.val!;
   }
@@ -61,7 +52,6 @@ export function useGardenBridge(inputToken: InputTokenSymbol, outputToken: Outpu
       solverId: params.solverId,
       sourceAddress: params.btcRefundAddress,
       destinationAddress,
-      affiliateFee: AFFILIATE_FEE,
     });
     if (!result || result.error) throw new Error(result?.error ?? "Swap initiation failed");
     return result.val!;
